@@ -1,0 +1,60 @@
+Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD failed with the following output:
+Change Dir: /home/local/mission/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake cmTC_6556f/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_6556f.dir/build.make CMakeFiles/cmTC_6556f.dir/build
+gmake[1]: Entering directory '/home/local/svn/robobot/user_mission/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_6556f.dir/src.c.o
+/usr/bin/cc   -DCMAKE_HAVE_LIBC_PTHREAD -o CMakeFiles/cmTC_6556f.dir/src.c.o -c /home/local/mission/build/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_6556f
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_6556f.dir/link.txt --verbose=1
+/usr/bin/cc  -DCMAKE_HAVE_LIBC_PTHREAD -rdynamic CMakeFiles/cmTC_6556f.dir/src.c.o -o cmTC_6556f 
+/usr/bin/ld: CMakeFiles/cmTC_6556f.dir/src.c.o: in function `main':
+src.c:(.text+0x40): undefined reference to `pthread_create'
+/usr/bin/ld: src.c:(.text+0x4c): undefined reference to `pthread_detach'
+/usr/bin/ld: src.c:(.text+0x58): undefined reference to `pthread_cancel'
+/usr/bin/ld: src.c:(.text+0x68): undefined reference to `pthread_join'
+collect2: error: ld returned 1 exit status
+gmake[1]: *** [CMakeFiles/cmTC_6556f.dir/build.make:106: cmTC_6556f] Error 1
+gmake[1]: Leaving directory '/home/local/svn/robobot/user_mission/build/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:140: cmTC_6556f/fast] Error 2
+
+
+Source file was:
+#include <pthread.h>
+
+void* test_func(void* data)
+{
+  return data;
+}
+
+int main(void)
+{
+  pthread_t thread;
+  pthread_create(&thread, NULL, test_func, NULL);
+  pthread_detach(thread);
+  pthread_cancel(thread);
+  pthread_join(thread, NULL);
+  pthread_atfork(NULL, NULL, NULL);
+  pthread_exit(NULL);
+
+  return 0;
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /home/local/mission/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake cmTC_794c3/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_794c3.dir/build.make CMakeFiles/cmTC_794c3.dir/build
+gmake[1]: Entering directory '/home/local/svn/robobot/user_mission/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_794c3.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create -o CMakeFiles/cmTC_794c3.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.18/Modules/CheckFunctionExists.c
+Linking C executable cmTC_794c3
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_794c3.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=pthread_create -rdynamic CMakeFiles/cmTC_794c3.dir/CheckFunctionExists.c.o -o cmTC_794c3  -lpthreads 
+/usr/bin/ld: cannot find -lpthreads
+collect2: error: ld returned 1 exit status
+gmake[1]: *** [CMakeFiles/cmTC_794c3.dir/build.make:106: cmTC_794c3] Error 1
+gmake[1]: Leaving directory '/home/local/svn/robobot/user_mission/build/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:140: cmTC_794c3/fast] Error 2
+
+
+
