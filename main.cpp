@@ -74,9 +74,10 @@ void step1()
   // clear events received from last mission
   event.clearEvents();
   // add mission lines
-  bridge.tx("regbot madd vel=0.2:time=1\n");
-  bridge.tx("regbot madd tr=0.1:time=1,turn=-90\n");
-  bridge.tx("regbot madd :time=1\n");
+  bridge.tx("regbot madd vel=0.3: dist=0.1")
+  bridge.tx("regbot madd vel=0.4: lv=20,dist=0.5")
+  bridge.tx("regbot madd vel=0.4,edger=0.0,white=1: lv<3")
+  bridge.tx("regbot madd vel=0.0:time=0")
   // start this mission
   bridge.tx("regbot start\n");
   // wait until finished
@@ -97,7 +98,7 @@ int main(int argc, char **argv)
   std::cout << "# Hello, Robobot user mission starting ...\n";
   setup(argc, argv);
   //
-  step1();
+  //step1();
   step1();
   step2();
   //
