@@ -22,6 +22,7 @@
 
 /*aiddsda*/
 
+#include <string>
 #include <iostream>
 #include "src/ubridge.h"
 #include "src/uvision.h"
@@ -31,7 +32,7 @@
 #include "src/uplay.h"
 #include "src/uevent.h"
 
-// to avoid writing std:: 
+// to avoid writing std::
 using namespace std;
 
 
@@ -41,7 +42,7 @@ void setup(int argc, char **argv)
   { // check for command line parameters
     // for process debug
     if (strcmp(argv[i], "help") == 0)
-    { 
+    {
       printf("-----\n# User mission command line help\n");
       printf("# usage:\n#   ./user_mission [help] [ball] [show] [aruco] [videoX]\n-----\n");
       return;
@@ -69,107 +70,82 @@ void setup(int argc, char **argv)
 
 void fastTrack()
 {
-  sound.say(". Step one.", 0.3);
   // remove old mission
   bridge.tx("regbot mclear\n");
   // clear events received from last mission
   event.clearEvents();
   usleep(2000);
+
   // add mission lines
   bridge.tx("regbot madd vel=0.3: dist=0.3\n");
   bridge.tx("regbot madd vel=0.4: dist=0.5, lv=20\n");
   bridge.tx("regbot madd vel=1.2,edger=0.0,white=1:dist=12, lv<3\n");
   bridge.tx("regbot madd vel=0.0:time=0\n");
+
   // start this mission
   bridge.tx("regbot start\n");
   // wait until finished
-  //
-  cout << "Waiting for step 1 to finish (event 0 is send, when mission is finished)\n";
+  cout << "Waiting for " + string(__func__) + "to finish" << endl;
   event.waitForEvent(0);
-  sound.say(". Step one finished.");
+  cout << string(__func__) + "has finished" << endl;
 }
 
 void guillotine()
 {
-  //sound.say(". Step one.", 0.3);
   bridge.tx("regbot mclear\n");
   // clear events received from last mission
   event.clearEvents();
   usleep(2000);
+
   // add mission lines
   bridge.tx("regbot madd vel=0.3: dist=0.3\n");
   bridge.tx("regbot madd vel=0.4: dist=0.5, lv=20\n");
   bridge.tx("regbot madd vel=0.6,edger=0.0,white=1:dist=4, lv<3\n");
   //bridge.tx("regbot madd vel=0.0:time=0\n");
+
   // start this mission
   bridge.tx("regbot start\n");
   // wait until finished
-  //
-  //cout << "Waiting for step 1 to finish (event 0 is send, when mission is finished)\n";
+  cout << "Waiting for " + string(__func__) + "  to finish" << endl;
   event.waitForEvent(0);
-  //sound.say(". Step one finished.");
-
+  cout << string(__func__) + "has finished" << endl;
 }
 
 void upTheRamp()
 {
-  //sound.say(". Step one.", 0.3);
   bridge.tx("regbot mclear\n");
   // clear events received from last mission
   event.clearEvents();
   //usleep(2000);
+
   // add mission lines
   //bridge.tx("regbot madd vel=0.3: dist=0.3\n");
   //bridge.tx("regbot madd vel=0.4: dist=0.5, lv=20\n");
   bridge.tx("regbot madd vel=0.6,edger=0.0,white=1:dist=7.20, lv<3\n");
   bridge.tx("regbot madd vel=0.0:time=0\n");
+
   // start this mission
   bridge.tx("regbot start\n");
   // wait until finished
-  //
-  cout << "Waiting for step 1 to finish (event 0 is send, when mission is finished)\n";
+  cout << "Waiting for " + string(__func__) + " to finish" << endl;
   event.waitForEvent(0);
-
-
+  cout << string(__func__) + "has finished" << endl;
 }
 
-void step2()
-{
-  sound.say("There is no step 2.", 0.3);
-  cout << "There is no step 2 yet\n";
-}
 
-void step3()
+int main(int argc, char **argv)
 {
- sound.say(". Step three.", 0.3);
- bridge.tx("regbot mclear\n");
- event.clearEvents();
- usleep(2000);
-
- bridge.tx("regbot madd vel=0.0: time=0.1\n");
- bridge.tx("regbot madd vel=0.4: dist=2\n");
- bridge.tx("regbot madd vel=0.0: time=0.1\n");
- bridge.tx("regbot start\n");
- cout << "Waiting for step 1 to finish (event 0 is send, when mission is finished)\n";
- event.waitForEvent(0);
- sound.say(". Step three finished.");
-}
-
-int main(int argc, char **argv) 
-{
-  std::cout << "# Hello, Robobot user mission starting ...\n";
+  cout << "# Hello, Robobot user mission starting ..." << endl;
   setup(argc, argv);
-  //
-  //step1();
-  //step1();
-  //step2();
+
   guillotine();
   upTheRamp();
-  //
-  std::cout << "# Robobot user mission finished ...\n";
+  //fastTrack();
+
+  cout << "# Robobot user mission finished ..." << endl;
   // remember to close camera
   vision.stop();
-  sound.say("I am finished... sorry danish.", 0.2);
+  sound.say("I am finished", 0.2);
   while (sound.isSaying())
     sleep(1);
   bridge.tx("regbot mute 1\n");

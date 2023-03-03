@@ -7,6 +7,8 @@
 #IncludeRegexTransform: 
 
 /home/local/mission/main.cpp
+string
+-
 iostream
 -
 src/ubridge.h
