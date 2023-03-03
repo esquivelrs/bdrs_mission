@@ -67,17 +67,18 @@ void setup(int argc, char **argv)
   sound.play("/home/local/Music/music.mp3", 0.05);
 }
 
-void step1()
+void fastTrack()
 {
   sound.say(". Step one.", 0.3);
   // remove old mission
   bridge.tx("regbot mclear\n");
   // clear events received from last mission
   event.clearEvents();
+  usleep(2000);
   // add mission lines
-  bridge.tx("regbot madd vel=0.3: dist=0.1\n");
-  bridge.tx("regbot madd vel=0.4: lv=20,dist=0.5\n");
-  bridge.tx("regbot madd vel=0.4,edger=0.0,white=1: lv<3\n");
+  bridge.tx("regbot madd vel=0.3: dist=0.3\n");
+  bridge.tx("regbot madd vel=0.4: dist=0.5, lv=20\n");
+  bridge.tx("regbot madd vel=1.2,edger=0.0,white=1:dist=12, lv<3\n");
   bridge.tx("regbot madd vel=0.0:time=0\n");
   // start this mission
   bridge.tx("regbot start\n");
@@ -88,10 +89,70 @@ void step1()
   sound.say(". Step one finished.");
 }
 
+void guillotine()
+{
+  //sound.say(". Step one.", 0.3);
+  bridge.tx("regbot mclear\n");
+  // clear events received from last mission
+  event.clearEvents();
+  usleep(2000);
+  // add mission lines
+  bridge.tx("regbot madd vel=0.3: dist=0.3\n");
+  bridge.tx("regbot madd vel=0.4: dist=0.5, lv=20\n");
+  bridge.tx("regbot madd vel=0.6,edger=0.0,white=1:dist=4, lv<3\n");
+  //bridge.tx("regbot madd vel=0.0:time=0\n");
+  // start this mission
+  bridge.tx("regbot start\n");
+  // wait until finished
+  //
+  //cout << "Waiting for step 1 to finish (event 0 is send, when mission is finished)\n";
+  event.waitForEvent(0);
+  //sound.say(". Step one finished.");
+
+}
+
+void upTheRamp()
+{
+  //sound.say(". Step one.", 0.3);
+  bridge.tx("regbot mclear\n");
+  // clear events received from last mission
+  event.clearEvents();
+  //usleep(2000);
+  // add mission lines
+  //bridge.tx("regbot madd vel=0.3: dist=0.3\n");
+  //bridge.tx("regbot madd vel=0.4: dist=0.5, lv=20\n");
+  bridge.tx("regbot madd vel=0.6,edger=0.0,white=1:dist=7.20, lv<3\n");
+  bridge.tx("regbot madd vel=0.0:time=0\n");
+  // start this mission
+  bridge.tx("regbot start\n");
+  // wait until finished
+  //
+  cout << "Waiting for step 1 to finish (event 0 is send, when mission is finished)\n";
+  event.waitForEvent(0);
+
+
+}
+
 void step2()
 {
   sound.say("There is no step 2.", 0.3);
   cout << "There is no step 2 yet\n";
+}
+
+void step3()
+{
+ sound.say(". Step three.", 0.3);
+ bridge.tx("regbot mclear\n");
+ event.clearEvents();
+ usleep(2000);
+
+ bridge.tx("regbot madd vel=0.0: time=0.1\n");
+ bridge.tx("regbot madd vel=0.4: dist=2\n");
+ bridge.tx("regbot madd vel=0.0: time=0.1\n");
+ bridge.tx("regbot start\n");
+ cout << "Waiting for step 1 to finish (event 0 is send, when mission is finished)\n";
+ event.waitForEvent(0);
+ sound.say(". Step three finished.");
 }
 
 int main(int argc, char **argv) 
@@ -100,8 +161,10 @@ int main(int argc, char **argv)
   setup(argc, argv);
   //
   //step1();
-  step1();
-  step2();
+  //step1();
+  //step2();
+  guillotine();
+  upTheRamp();
   //
   std::cout << "# Robobot user mission finished ...\n";
   // remember to close camera
