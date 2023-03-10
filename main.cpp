@@ -30,6 +30,7 @@
 #include "src/ustate.h"
 #include "src/uplay.h"
 #include "src/uevent.h"
+#include "src/uirdistance.h"
 
 // to avoid writing std:: 
 using namespace std;
@@ -56,6 +57,7 @@ void setup(int argc, char **argv)
     state.setup();
     vision.setup(argc, argv);
     event.setup();
+    irdistance.setup();
     printf("# Setup finished OK\n");
   }
   else
@@ -67,25 +69,10 @@ void setup(int argc, char **argv)
   sound.play("/home/local/Music/music.mp3", 0.05);
 }
 
-void step1()
+void showDist()
 {
-  sound.say(". Step one.", 0.3);
-  // remove old mission
-  bridge.tx("regbot mclear\n");
-  // clear events received from last mission
-  event.clearEvents();
-  // add mission lines
-  bridge.tx("regbot madd vel=0.3: dist=0.1\n");
-  bridge.tx("regbot madd vel=0.4: lv=20,dist=0.5\n");
-  bridge.tx("regbot madd vel=0.4,edger=0.0,white=1: lv<3\n");
-  bridge.tx("regbot madd vel=0.0:time=0\n");
-  // start this mission
-  bridge.tx("regbot start\n");
-  // wait until finished
-  //
-  cout << "Waiting for step 1 to finish (event 0 is send, when mission is finished)\n";
-  event.waitForEvent(0);
-  sound.say(". Step one finished.");
+  cout << irdist;
+
 }
 
 void step2()
@@ -100,8 +87,7 @@ int main(int argc, char **argv)
   setup(argc, argv);
   //
   //step1();
-  step1();
-  step2();
+  showDist();
   //
   std::cout << "# Robobot user mission finished ...\n";
   // remember to close camera

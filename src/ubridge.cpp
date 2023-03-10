@@ -31,10 +31,10 @@
 #include "ustate.h"
 #include "uvision.h"
 #include "uevent.h"
+#include "uirdistance.h"
 
 // create the bridge connection
 UBridge bridge;
-
 
 void UBridge::decode(char* msg)
 { /// ask all if they can use this message
@@ -42,6 +42,8 @@ void UBridge::decode(char* msg)
   else if (pose.decode(msg)) {}
   else if (state.decode(msg)) {}
   else if (event.decode(msg)) {}
+  else if (irdistance.decode(msg)) {}
+
   else
     printf("Received, but not used: %s\n", msg);
 }
