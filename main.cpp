@@ -85,12 +85,14 @@ void moveRobot()
 
 void ballTrack(cv::Mat1f ballPos)
 {
+  
+  float arm_dist = 0.35;
   const int MSL = 200;
   char s[MSL];
   double radians = atan(ballPos.at<float>(0, 1) / ballPos.at<float>(0, 0));
   double degrees = radians * (180.0 / M_PI);
   std::cout << "Angle " << degrees << " degrees" << std::endl;
-  float dist = ballPos.at<float>(0, 0)
+  float dist = ballPos.at<float>(0, 0) - arm_dist
 
 
   sound.say(". Step one.", 0.3);
@@ -129,14 +131,17 @@ int main(int argc, char **argv)
   //step1();
   //step2();
   //vision.processImage(60);
-  
-  bool ball = vision.loopVideo(10);
-  if (ball == true){
-    std::cout << "# BALL FOUND !!!!!!!!!!!!!!" << vision.ballPossition << "\n";
-    ballTrack(vision.ballPossition);
+  int n = 1;
+  UTime t;
+  t.now();
 
-
-
+  while(n<6 and t.getTimePassed() < 60){
+    bool ball = vision.loopVideo(10);
+    if (ball == true){
+      std::cout << "# BALL FOUND "<< n <<" Pos: " << vision.ballPossition << "\n";
+      ballTrack(vision.ballPossition);
+      n +=1;
+    }
   }
   //
   std::cout << "# Robobot user mission finished ...\n";
