@@ -59,7 +59,10 @@ public:
   bool processImage(float seconds);
   /**
    * Stream to screen - if any screen is available */
-  bool loopVideo(float seconds);
+  bool get_ball(float seconds);
+  /**
+   * Stream to screen - if any screen is available */
+  bool doFindAruco(float seconds);
   /**
    * Close camera */
   void stop();
@@ -123,7 +126,6 @@ private:
   void ballProjectionAndTest();
   //
   bool findAruco = false;
-  bool doFindAruco();
   // 
   /**
    * Calculates color distance between pix and col.

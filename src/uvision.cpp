@@ -624,7 +624,7 @@ bool UVision::loopVideo(float seconds)
 }
 
 
-bool UVision::doFindAruco()
+bool UVision::doFindAruco(float seconds)
 { // image is in 'frame'
   printf("# not implemented\n");
   return false;
