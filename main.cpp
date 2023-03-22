@@ -30,6 +30,7 @@
 #include "src/ustate.h"
 #include "src/uplay.h"
 #include "src/uevent.h"
+#include "src/utime.h"
 
 // to avoid writing std:: 
 using namespace std;
@@ -136,6 +137,7 @@ int main(int argc, char **argv)
   t.now();
 
   while(n<6 and t.getTimePassed() < 60){
+  //while(n<6){
     bool ball = vision.loopVideo(10);
     if (ball == true){
       std::cout << "# BALL FOUND "<< n <<" Pos: " << vision.ballPossition << "\n";

@@ -116,7 +116,7 @@ void UVision::setup(int argc, char **argv)
                                   0.f ,  0.f, 0.f , 1.f);
   //
   //READ CALIBRATION FILE
-  cv::FileStorage fs("calibration.yaml", cv::FileStorage::READ);
+  cv::FileStorage fs("../calibration.yaml", cv::FileStorage::READ);
 
   cv::Mat camera_matrix, dist_coeffs;
 
