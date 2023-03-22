@@ -115,14 +115,7 @@ void guillotine()
   cout << "user:# " + string(__func__) + " has finished" << endl;
 }
 
-void moveTest()
-{
-  bridge.tx("regbot mclear\n");
-  event.clearEvents();
-  bridge.tx("regbot madd vel=0.2: dist=0.3\n");
-  bridge.tx("regbot start\n");
-  event.waitForEvent(0);
-}
+void tes
 
 void upTheRamp()
 {
@@ -144,15 +137,65 @@ void upTheRamp()
   cout << "user:# " + string(__func__) + " has finished" << endl;
 }
 
+void tunnel()
+{
+  bridge.tx("regbot mclear\n");
+  event.clearEvents();
+  bridge.tx("regbot madd vel=0.4: dist=0.1\n");
+  bridge.tx("regbot madd vel=0.4: lv=20, dist=0.5\n");
+  bridge.tx("regbot madd vel=0.4, edger=0, white=1: dist=1.5, lv<4, xl>15\n");
+  bridge.tx("regbot madd vel=0.4, tr=0.5: turn=80\n");
+  bridge.tx("regbot madd vel=0.2: ir2<0.14\n");
+  bridge.tx("regbot madd vel=0.2, tr=0.15:turn=-80\n");
+  bridge.tx("regbot madd vel=0.3: ir2<0.1    \n");
+  bridge.tx("regbot madd vel=0.0: time=0.5\n");
+  bridge.tx("regbot madd vel=0.6: dist=0.1\n");
+  bridge.tx("regbot madd vel=0.3: dist=0.1\n");
+  bridge.tx("regbot madd vel=0.3, tr=0.33: turn=85\n");
+  bridge.tx("regbot madd vel=0.0: time=0.8\n");
+  bridge.tx("regbot madd vel=0.3: dist=0.1\n");
+  bridge.tx("regbot madd vel=0.0: time=0.8\n");
+  bridge.tx("regbot madd vel=0.3, tr=0.1: turn=75\n");
+  bridge.tx("regbot madd vel=0.0: time=2.0\n");
+  bridge.tx("regbot madd vel=0.4: ir2<0.15\n");
+  bridge.tx("regbot madd vel=0.4: dist=0.3\n");
+  bridge.tx("regbot madd vel=0.4, tr=0.35: turn=-84\n");
+  bridge.tx("regbot madd vel=0.0: time=0.8\n");
+  bridge.tx("regbot madd vel=0.4: dist=0.12\n");
+  bridge.tx("regbot madd vel=0.4, tr=0.3: turn=-80\n");
+  bridge.tx("regbot madd vel=0.0: time=0.8\n");
+  bridge.tx("regbot madd vel=0.4: dist=0.8\n");
+  bridge.tx("regbot madd vel=0.4, tr=0.3: turn=-87\n");
+  bridge.tx("regbot madd vel=0.0: time=0.8\n");
+  bridge.tx("regbot madd vel=0.3: dist=0.8\n");
+  bridge.tx("regbot madd vel=0.4, tr=0.3: turn=-85\n");
+  bridge.tx("regbot madd vel=0.0: time=0.8\n");
+  bridge.tx("regbot madd vel=0.4: dist=0.7\n");
+  bridge.tx("regbot madd vel=0.4, tr=0.3: turn=-79\n");
+  bridge.tx("regbot madd vel=0.0: time=0.8\n");
+  bridge.tx("regbot madd vel=0.3: dist=0.4\n");
+  bridge.tx("regbot madd vel=0.0: time=0.8\n");
+  bridge.tx("regbot madd vel=-0.5: lv=20, dist=2.5\n");
+  bridge.tx("regbot madd vel=0.0: time=0.8\n");
+  bridge.tx("regbot madd vel=0.2, edgel=0, white=1: dist=0.2, lv<4\n");
+  bridge.tx("regbot madd vel=0.0: time=0.5\n");
+
+  // start this mission
+  bridge.tx("regbot start\n");
+  // wait until finished
+  cout << "user:# Waiting for " + string(__func__) + " to finish" << endl;
+  event.waitForEvent(0);
+  cout << "user:# " + string(__func__) + " has finished" << endl;
+}
+
 int main(int argc, char **argv)
 {
   cout << "# Hello, Robobot user mission starting ..." << endl;
   setup(argc, argv);
 
-  //guillotine();
-  //upTheRamp();
+  guillotine();
+  upTheRamp();
   //fastTrack();
-  moveTest();
 
   cout << "# Robobot user mission finished ..." << endl;
   // remember to close camera
