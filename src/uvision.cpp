@@ -609,7 +609,7 @@ bool UVision::loopVideo(float seconds)
   cout << "Mean: " << ballPossition << std::endl;
   cout << "Samples " << samples.size() << std::endl;
 
-  if (samples.size()>30){
+  if (samples.size()>10){
     
     return true;
 
