@@ -29,6 +29,12 @@
 #include "utime.h"
 #include <opencv2/imgproc.hpp>
 #include <opencv2/core/types.hpp>
+#include <opencv2/core.hpp>
+#include <iostream>
+#include <iostream>
+#include<iostream>
+using namespace std;
+using namespace cv;
 
 // create the vision object
 UVision vision;
@@ -81,8 +87,8 @@ void UVision::setup(int argc, char **argv)
     // (rows x columns) 320x640, 720x1280
     cap.set(cv::CAP_PROP_FRAME_HEIGHT, 720); // 320
     cap.set(cv::CAP_PROP_FRAME_WIDTH, 1280); // 640
-//     cap.set(cv::CAP_PROP_FRAME_HEIGHT, 320); // 320
-//     cap.set(cv::CAP_PROP_FRAME_WIDTH, 640); // 640
+    //cap.set(cv::CAP_PROP_FRAME_HEIGHT, 320); // 320
+    //cap.set(cv::CAP_PROP_FRAME_WIDTH, 640); // 640
     cap.set(cv::CAP_PROP_FPS, 25); // 640
     union FourChar
     {
@@ -109,6 +115,26 @@ void UVision::setup(int argc, char **argv)
                                   -st, 0.f, ct, camPos[2],
                                   0.f ,  0.f, 0.f , 1.f);
   //
+  //READ CALIBRATION FILE
+  cv::FileStorage fs("calibration.yaml", cv::FileStorage::READ);
+
+  cv::Mat camera_matrix, dist_coeffs;
+
+  if (fs.isOpened())
+  {
+      fs["camera_matrix"] >> camera_matrix;
+      fs["dist_coeff"] >> dist_coeffs;
+      fs.release();
+  }
+  else
+  {
+      std::cerr << "Failed to open YAML file." << std::endl;
+  }
+
+  std::cout << "Camera matrix: " << std::endl << camera_matrix << std::endl;
+  std::cout << "Distortion coefficients: " << std::endl << dist_coeffs << std::endl;
+
+
 }
 
 void UVision::stop()
@@ -240,11 +266,11 @@ bool UVision::doFindBall()
 { // process pipeline to find
   // bounding boxes of balls with matched colour
   cv::Mat yuv;
-  cv::imwrite("rgb_balls_01.png", frame);
+  //cv::imwrite("rgb_balls_01.png", frame);
   cv::cvtColor(frame, yuv, cv::COLOR_BGR2YUV);
   int h = yuv.rows;
   int w = yuv.cols;
-  cv::imwrite("yuv_balls_01.png", yuv);
+  //cv::imwrite("yuv_balls_01.png", yuv);
   printf("# YUV saved, size width=%d height=%d\n", w, h);
   //
   // color for filter
@@ -263,37 +289,19 @@ bool UVision::doFindBall()
       pOra++; // increase to next destination pixel
     }
   }
-  //
-//   // threshold to BW image
-//   if (false)
-//   { // for determine a good detect threshold for the colour enhanced images
-//     source = gray1;
-//     dest.create(h,w, CV_8UC1);
-//     windowName = "process, find detect threshold";
-//     cv::namedWindow( windowName, cv::WINDOW_AUTOSIZE );
-//     slider1 = 230;
-//     cv::createTrackbar( "Threshold:", windowName, &slider1, 255, thresholdGrayDetermine);
-//     thresholdGrayDetermine(0, nullptr);
-//     cv::waitKey(0); // wait 
-//     printf("# Orange threshold ended at %d\n", slider1);
-//     // this is bor interactive use, so stop here
-//     return true;
-//   }
-  //
-  // do static threshold at value 230, max is 255 and mode is 3 (zero all pixels below threshold) 
   cv::Mat gray2;
   cv::threshold(gray1, gray2, 230, 255, 3);
   //
   // remove small items with a erode/delate
   // last parameter is iterations, and could be increased
   cv::Mat gray3, gray4;
-  cv::erode(gray2, gray3, cv::Mat(), cv::Point(-1,-1), 1);
-  cv::dilate(gray3, gray4, cv::Mat(), cv::Point(-1,-1), 1);
+  cv::erode(gray2, gray3, cv::Mat(), cv::Point(-1,-1), 2);
+  cv::dilate(gray3, gray4, cv::Mat(), cv::Point(-1,-1), 2);
   if (showImage)
   { // show eroded/dilated image
     cv::imshow("Thresholede image", gray2);
     cv::imshow("Eroded/dilated image", gray4);
-    cv::waitKey(1000); // 1 second
+    cv::waitKey(25); // 1 second
   }
   //
   // find contours for further validation
@@ -310,7 +318,7 @@ bool UVision::doFindBall()
       cv::drawContours( col4, contours, (int)i, color, 2, cv::LINE_8, hierarchy, 0 );
     }
     imshow( "Contours", col4);
-    cv::waitKey(1000);
+    cv::waitKey(10);
   }
   // Test for valid contours
   if (showImage)
@@ -431,9 +439,216 @@ void UVision::ballProjectionAndTest()
 }
 
 
+bool UVision::getball(){
+  Vec3i max_circle(0,0,0);
+  Mat frame_HSV, frame_gray, frame_threshold, frame_ed;
+  cv::cvtColor(frame, frame_gray, COLOR_BGR2GRAY);
+  cv::GaussianBlur(frame_gray, frame_gray, Size(5, 5), 0);
+
+  vector<Vec3f> circles;
+  cv::HoughCircles(frame_gray, circles, HOUGH_GRADIENT, 1,
+              frame_gray.rows/16,  // change this value to detect circles with different distances to each other
+              100, 30, 30, 150 // change the last two parameters
+          // (min_radius & max_radius) to detect larger circles
+  );
+  for( size_t i = 0; i < circles.size(); i++ )
+  {
+      Vec3i c = circles[i];
+      Point center = Point(c[0], c[1]);
+      // circle center
+
+
+      if (0<(c[0]-c[2]/4) && (c[0]+c[2]/4)<frame.cols && 0<(c[1]-c[2]/4) && (c[1]+c[2]/4)<frame.rows){
+        
+        cv::cvtColor(frame, frame_HSV, COLOR_BGR2HSV);
+        cv::Mat roi = frame_HSV(cv::Range(c[1]-c[2]/4, c[1]+c[2]/4), cv::Range(c[0]-c[2]/4, c[0]+c[2]/4));
+        cv::Mat1b mask(roi.rows, roi.cols);
+        cv::Scalar mean = cv::mean(roi, mask);
+        int hue = round(mean[0]);
+        cout << "CIRCLE FOUND: " << center << " radio: " << c[2] << " hue: " << hue <<"\n";
+
+        if (hue < 24){
+          cout << "BALL FOUND: " << center;
+          cout << " radio: " << c[2] << " hue: " << hue << "\n";
+          cv::circle( frame, center, 1, Scalar(0,100,100), 3, LINE_AA);
+          // circle outline
+          int radius = c[2];
+          cv::circle( frame, center, radius, Scalar(255,0,255), 3, LINE_AA);
+          std::string text = "BALL FOUND: (" + std::to_string(center.x) + ", " + std::to_string(center.y) + ")" + " radio: " + std::to_string(c[2]) + " hue: " + std::to_string(hue); 
+          cv::putText(frame, text, center, cv::FONT_HERSHEY_DUPLEX, 0.4, cv::Scalar(0,255,0), 2, false);
+          if (max_circle[2]<radius){
+            max_circle[0] = c[0];
+            max_circle[1] = c[1];
+            max_circle[2] = radius;
+
+          }
+
+
+        }
+      }
+  }
+
+  bool ball= false;
+  if (0<max_circle[2]){
+      cout << "TRACKING BALL: " << max_circle;
+      int radio = max_circle[2];
+      float dist = golfBallDiameter * focalLength / float(radio*2);
+      // the position in x (right) and y (down)
+
+      float bbCenter[2] = {max_circle[0], max_circle[1]};
+      float frameCenter[2] = {frame.cols/2.0f, frame.rows/2.0f};
+
+      // distance right of image center line - in meters
+      float x = (bbCenter[0] - frameCenter[0])/focalLength * dist;
+      // distance below image center line - in meters
+      float y = (bbCenter[1] - frameCenter[1])/focalLength * dist;
+      // make a vector of ball center with (x=forward, y=left, z=up)
+      cv::Vec4f pos3dcam(dist, -x, -y, 1.0f);
+      // printf("# ball %d position in cam   coordinates (x,y,z)=(%.2f, %.2f, %.2f)\n", 
+      //       pos3dcam[0], pos3dcam[1], pos3dcam[2]);
+      // print used matrices and vector
+      // cout << "camToRobot: " << camToRobot << "\n";
+      // cout << "# pos3dcam  : " << pos3dcam << "\n";
+      pos3drob = camToRobot * pos3dcam;
+      ball = true;
+            
+  }
+  //Vec3i max_circle(0,0,0);
+  return ball;
+
+}
+
+
+float euclideanDistance(const cv::Mat1f& v1, const cv::Mat1f& v2) {
+    cv::Mat1f diff = v1 - v2;
+    return cv::sqrt(diff.dot(diff));
+}
+
+bool UVision::loopVideo(float seconds)
+{
+  printf("# TEST\n");
+  float distanceThreshold = 5.0;
+  vector<cv::Mat1f> samples;
+  cv::Mat1f accumulated = cv::Mat1f::zeros(1, 3);  // Accumulated sum
+  int numSamples = 0;
+
+  // VideoCapture cap(0);
+  // if (!cap.isOpened()) {
+  // cout << "cannot open camera";
+  // }
+
+  UTime t;
+  t.now();
+
+  while (t.getTimePassed()< 0.8){
+    cout << "# wait for the first frames\n";
+    getNewestFrame(); 
+
+  }
+
+  t.now();
+
+
+  //while (t.getTimePassed() < seconds and camIsOpen and not terminate and n<5) {
+  while (t.getTimePassed() < seconds and camIsOpen and not terminate) {
+    //cap >> image;
+
+    getNewestFrame(); 
+
+
+    if (gotFrame){
+
+      bool ball = getball();
+      if (ball==true){
+
+        printf("# ball %d position in robot coordinates (x,y,z)=(%.2f, %.2f, %.2f)\n", 
+              pos3drob.at<float>(0), pos3drob.at<float>(1), pos3drob.at<float>(2));
+        
+        std::vector<float> sample = pos3drob;
+
+        std::vector<float> sample3 = {sample[0], sample[1], sample[2]};
+
+        cv::Mat1f sampleMat = cv::Mat1f(sample3, true).t();
+        //sampleMat.resize(3);
+        cout << "sample: " << sampleMat;
+        samples.push_back(sampleMat);
+        accumulated += sampleMat;
+        numSamples += 1;
+
+      }
+      //cout << "# pos3dcam  : " << pos3dcam << "\n";
+
+      if (showImage)
+      {
+        imshow("BALLS", frame);
+      }
+
+      waitKey(25);
+    }
+  }
+ // Calculate mean
+  cv::Mat1f mean = accumulated / static_cast<float>(numSamples);
+
+  // Filter outliers
+  std::vector<cv::Mat1f> filteredSamples;
+  for (auto& sample : samples) {
+      float distance = cv::norm(sample - mean);
+      if (distance <= distanceThreshold) {
+          filteredSamples.push_back(sample);
+      }
+  }
+
+  // Recalculate mean using only filtered samples
+  cv::Mat1f filteredAccumulated = cv::Mat1f::zeros(1, 3);
+  for (auto& sample : filteredSamples) {
+      filteredAccumulated += sample;
+  }
+  ballPossition = filteredAccumulated / static_cast<float>(filteredSamples.size());
+
+  // Print mean
+  cout << "Mean: " << ballPossition << std::endl;
+  cout << "Samples " << samples.size() << std::endl;
+
+  if (samples.size()>30){
+    
+    return true;
+
+  }else{
+
+    return false;
+
+  }
+
+
+
+}
+
 
 bool UVision::doFindAruco()
 { // image is in 'frame'
   printf("# not implemented\n");
   return false;
 }
+
+
+
+
+//cv::Vec3b yuvOrange = cv::Vec3b(128,88,187);
+// cv::cvtColor(frame, frame_HSV, COLOR_BGR2HSV);
+// cv::imwrite("hsv_picture.png", frame_HSV);
+// cv::blur(frame_HSV, frame_HSV, cv::Size(1, 1));
+// cv::inRange(frame_HSV, Scalar(7, 50, 50), Scalar(15, 200, 200),frame_threshold);
+// cv::erode(frame_threshold, frame_ed, cv::Mat(), cv::Point(-1,-1), 2);
+// cv::dilate(frame_ed, frame_ed, cv::Mat(), cv::Point(-1,-1), 2);
+
+// Moments m = moments(frame_ed, false);
+// Point com(m.m10 / m.m00, m.m01 / m.m00);
+
+// Scalar color = cv::Scalar(0, 0, 255);
+// cv::drawMarker(frame, com, color, cv::MARKER_CROSS, 50, 5);
+
+// cv::imshow("Display window", frame);
+// cv::imshow("Display Threshold", frame_threshold);
+
+// cv::imshow("Display ERODED-DILATED", frame_ed);
+//doFindBall();

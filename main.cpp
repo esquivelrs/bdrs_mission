@@ -63,35 +63,43 @@ void setup(int argc, char **argv)
   sound.say("me?... I am a depressed robot... help me.", 0.1);
   while (sound.isSaying())
     usleep(100000);
-  // a bit of background music
-  sound.play("/home/local/Music/music.mp3", 0.05);
 }
 
-void step1()
-{
-  sound.say(". Step one.", 0.3);
-  // remove old mission
-  bridge.tx("regbot mclear\n");
-  // clear events received from last mission
-  event.clearEvents();
-  // add mission lines
-  bridge.tx("regbot madd vel=0.3: dist=0.1\n");
-  bridge.tx("regbot madd vel=0.4: lv=20,dist=0.5\n");
-  bridge.tx("regbot madd vel=0.4,edger=0.0,white=1: lv<3\n");
-  bridge.tx("regbot madd vel=0.0:time=0\n");
-  // start this mission
-  bridge.tx("regbot start\n");
-  // wait until finished
-  //
-  cout << "Waiting for step 1 to finish (event 0 is send, when mission is finished)\n";
-  event.waitForEvent(0);
-  sound.say(". Step one finished.");
-}
+
 
 void step2()
 {
   sound.say("There is no step 2.", 0.3);
   cout << "There is no step 2 yet\n";
+}
+
+void moveRobot()
+{
+  const int MSL = 200;
+  char s[MSL];
+  float a=0.4, b=3;
+  snprintf(s,MSL,"regbot madd vel=%f: time=%f\n", a, b);
+  //bridge.tx(s);
+  
+}
+
+void ballTrack(cv::Mat1f ballPos)
+{
+  const int MSL = 200;
+  char s[MSL];
+  double radians = atan(ballPos.at<float>(0, 1) / ballPos.at<float>(0, 0));
+  double degrees = radians * (180.0 / M_PI);
+  std::cout << "Angle " << degrees << " degrees" << std::endl;
+
+  bridge.tx("regbot mclear\n");
+  bridge.tx("regbot madd vel=0.0, log=3.0: time=0.02 \n");
+  //vel=0.3,tr=0.2:turn=90
+  snprintf(s,MSL,"regbot madd vel=%f,tr=0.2:turn=%f\n", 0.2, 20.0);
+
+  //snprintf(s,MSL,"regbot madd vel=%f: time=%f\n", a, b);
+
+  bridge.tx(s);
+  
 }
 
 int main(int argc, char **argv) 
@@ -100,8 +108,18 @@ int main(int argc, char **argv)
   setup(argc, argv);
   //
   //step1();
-  step1();
-  step2();
+  //step1();
+  //step2();
+  //vision.processImage(60);
+  
+  bool ball = vision.loopVideo(10);
+  if (ball == true){
+    std::cout << "# BALL FOUND !!!!!!!!!!!!!!" << vision.ballPossition << "\n";
+    ballTrack(vision.ballPossition);
+
+
+
+  }
   //
   std::cout << "# Robobot user mission finished ...\n";
   // remember to close camera

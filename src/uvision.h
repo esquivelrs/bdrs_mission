@@ -37,6 +37,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <math.h>
+#include <opencv2/core/types.hpp>
 
 #include <opencv2/core.hpp>
 #include <opencv2/videoio.hpp>
@@ -56,6 +57,9 @@ public:
   /**
    * Stream to screen - if any screen is available */
   bool processImage(float seconds);
+  /**
+   * Stream to screen - if any screen is available */
+  bool loopVideo(float seconds);
   /**
    * Close camera */
   void stop();
@@ -79,8 +83,8 @@ public:
   const float golfBallDiameter = 0.043; // meter
   /**
    * camera position in robot coordinates (x (forward), y (left), z (up)) */
-  const float camPos[3] = {0.13,-0.02, 0.23};       // in meters
-  const float camTilt = 22 * M_PI / 180; // in radians
+  const float camPos[3] = {0.225,0.0, 0.20};       // in meters
+  const float camTilt = 45 * M_PI / 180; // in radians
   cv::Mat1f camToRobot;
 //   const float st = sin(camTilt);
 //   const float ct = cos(camTilt);
@@ -88,6 +92,11 @@ public:
 //                                          0.f ,  1.f, 0.f , camPos[1];
 //                                          -st, 0.f, ct, camPos[2];
 //                                          0.f ,  0.f, 0.f , 1.f);
+
+  cv::Mat1f ballPossition;
+
+
+ 
   
 private:
   /// buffer for captured image
@@ -121,6 +130,10 @@ private:
    * distance 0 is total match, else block distance for U and V only
    * \returns d = |du| + |dv| */
   int uvDistance(cv::Vec3b pix, cv::Vec3b col);
+
+  //Vec3i max_circle;
+  cv::Mat1f pos3drob;
+  bool getball();
   
 };
 
