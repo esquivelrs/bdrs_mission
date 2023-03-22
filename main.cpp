@@ -92,7 +92,7 @@ void ballTrack(cv::Mat1f ballPos)
   double radians = atan(ballPos.at<float>(0, 1) / ballPos.at<float>(0, 0));
   double degrees = radians * (180.0 / M_PI);
   std::cout << "Angle " << degrees << " degrees" << std::endl;
-  float dist = ballPos.at<float>(0, 0) - arm_dist
+  float dist = ballPos.at<float>(0, 0) - arm_dist;
 
 
   sound.say(". Step one.", 0.3);
