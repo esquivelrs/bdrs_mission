@@ -444,12 +444,12 @@ bool UVision::getball(){
   Vec3i max_circle(0,0,0);
   Mat frame_HSV, frame_gray, frame_threshold, frame_ed;
   cv::cvtColor(frame, frame_gray, COLOR_BGR2GRAY);
-  cv::GaussianBlur(frame_gray, frame_gray, Size(5, 5), 0);
+  cv::GaussianBlur(frame_gray, frame_gray, Size(7, 7), 0);
 
   vector<Vec3f> circles;
   cv::HoughCircles(frame_gray, circles, HOUGH_GRADIENT, 1,
-              frame_gray.rows/16,  // change this value to detect circles with different distances to each other
-              100, 30, 30, 150 // change the last two parameters
+              frame_gray.rows/4,  // change this value to detect circles with different distances to each other
+              100, 10, 40, 100 // change the last two parameters
           // (min_radius & max_radius) to detect larger circles
   );
   for( size_t i = 0; i < circles.size(); i++ )
@@ -466,17 +466,19 @@ bool UVision::getball(){
         cv::Mat1b mask(roi.rows, roi.cols);
         cv::Scalar mean = cv::mean(roi, mask);
         int hue = round(mean[0]);
+        int sat = round(mean[1]);
+        int val = round(mean[2]);
         cout << "CIRCLE FOUND: " << center << " radio: " << c[2] << " hue: " << hue <<"\n";
 
-        if (hue < 24){
+        if (val>200){
           cout << "BALL FOUND: " << center;
           cout << " radio: " << c[2] << " hue: " << hue << "\n";
           cv::circle( frame, center, 1, Scalar(0,100,100), 3, LINE_AA);
           // circle outline
           int radius = c[2];
           cv::circle( frame, center, radius, Scalar(255,0,255), 3, LINE_AA);
-          std::string text = "BALL FOUND: (" + std::to_string(center.x) + ", " + std::to_string(center.y) + ")" + " radio: " + std::to_string(c[2]) + " hue: " + std::to_string(hue); 
-          cv::putText(frame, text, center, cv::FONT_HERSHEY_DUPLEX, 0.4, cv::Scalar(0,255,0), 2, false);
+          std::string text = "BALL FOUND: (" + std::to_string(center.x) + ", " + std::to_string(center.y) + ")" + " radio: " + std::to_string(c[2]) + "hsv" + std::to_string(hue) + "," + std::to_string(sat)+ "," + std::to_string(val); 
+          cv::putText(frame, text, center, cv::FONT_HERSHEY_DUPLEX, 0.4, cv::Scalar(0,0,0), 2, false);
           if (max_circle[2]<radius){
             max_circle[0] = c[0];
             max_circle[1] = c[1];
@@ -541,7 +543,7 @@ bool UVision::get_ball(float seconds)
   UTime t;
   t.now();
 
-  while (t.getTimePassed()< 0.8){
+  while (t.getTimePassed()< 1){
     cout << "# wait for the first frames\n";
     getNewestFrame(); 
 

@@ -119,9 +119,9 @@ void golf_mission(){
   UTime t;
   t.now();
 
-  while(n<6 and t.getTimePassed() < 50){
+  while(n<2 and t.getTimePassed() < 50){
   //while(n<6){
-    bool ball = vision.get_ball(10);
+    bool ball = vision.get_ball(20);
     if (ball == true){
       std::cout << "# BALL FOUND "<< n <<" Pos: " << vision.ballPossition << "\n";
       ballTrack(vision.ballPossition);
