@@ -449,7 +449,7 @@ bool UVision::getball(){
   vector<Vec3f> circles;
   cv::HoughCircles(frame_gray, circles, HOUGH_GRADIENT, 1,
               frame_gray.rows/4,  // change this value to detect circles with different distances to each other
-              100, 10, 40, 100 // change the last two parameters
+              200, 5, 40, 100 // change the last two parameters
           // (min_radius & max_radius) to detect larger circles
   );
   for( size_t i = 0; i < circles.size(); i++ )
@@ -468,9 +468,9 @@ bool UVision::getball(){
         int hue = round(mean[0]);
         int sat = round(mean[1]);
         int val = round(mean[2]);
-        cout << "CIRCLE FOUND: " << center << " radio: " << c[2] << " hue: " << hue <<"\n";
+        cout << "CIRCLE FOUND: " << center << " radio: " << c[2] << " hue: " << hue << " sat: " << sat << " val: " << val <<"\n";
 
-        if (val>200){
+        if (hue< 40 and val>200){
           cout << "BALL FOUND: " << center;
           cout << " radio: " << c[2] << " hue: " << hue << "\n";
           cv::circle( frame, center, 1, Scalar(0,100,100), 3, LINE_AA);
@@ -612,7 +612,7 @@ bool UVision::get_ball(float seconds)
   cout << "Mean: " << ballPossition << std::endl;
   cout << "Samples " << samples.size() << std::endl;
 
-  if (samples.size()>10){
+  if (samples.size()>5){
     
     return true;
 
