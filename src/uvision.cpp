@@ -30,6 +30,7 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/core.hpp>
+#include <opencv2/aruco.hpp>
 #include <iostream>
 #include <iostream>
 #include<iostream>
@@ -524,9 +525,9 @@ float euclideanDistance(const cv::Mat1f& v1, const cv::Mat1f& v2) {
     return cv::sqrt(diff.dot(diff));
 }
 
-bool UVision::loopVideo(float seconds)
+bool UVision::get_ball(float seconds)
 {
-  printf("# TEST\n");
+  printf("# GET BALL\n");
   float distanceThreshold = 5.0;
   vector<cv::Mat1f> samples;
   cv::Mat1f accumulated = cv::Mat1f::zeros(1, 3);  // Accumulated sum
@@ -626,7 +627,52 @@ bool UVision::loopVideo(float seconds)
 
 bool UVision::doFindAruco(float seconds)
 { // image is in 'frame'
-  printf("# not implemented\n");
+  printf("# GET ARUCO\n");
+
+  UTime t;
+  t.now();
+
+  while (t.getTimePassed()< 0.8){
+    cout << "# wait for the first frames\n";
+    getNewestFrame(); 
+
+  }
+
+  t.now();
+  Ptr<aruco::Dictionary> dictionary = cv::makePtr<aruco::Dictionary>(aruco::getPredefinedDictionary(cv::aruco::DICT_5X5_100));
+
+
+
+  //while (t.getTimePassed() < seconds and camIsOpen and not terminate and n<5) {
+  while (t.getTimePassed() < seconds and camIsOpen and not terminate) {
+    //cap >> image;
+
+    getNewestFrame(); 
+
+    if (gotFrame){
+      
+      Mat markerImage;
+      // Load the predefined dictionary
+      //Ptr<cv::aruco::Dictionary> dictionary = aruco::getPredefinedDictionary(cv::aruco::DICT_5X5_100);
+      //cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_250);
+
+          
+      // Detect the markers in the image
+      std::vector<int> markerIds;
+      std::vector<std::vector<Point2f>> markerCorners;
+      aruco::detectMarkers(frame, dictionary, markerCorners, markerIds);
+      
+      // Draw the marker outlines on the image
+      aruco::drawDetectedMarkers(frame, markerCorners, markerIds);
+
+      if (showImage)
+      {
+        imshow("ARUCO", frame);
+      }
+
+      waitKey(25);
+    }
+  }
   return false;
 }
 

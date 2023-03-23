@@ -84,6 +84,12 @@ void moveRobot()
   
 }
 
+
+void takeBall(){
+  //servo=1,pservo=-600, vservo=120:time=8
+  bridge.tx("regbot madd servo=1,pservo=-600,vservo=120:time=8\n");
+}
+
 void ballTrack(cv::Mat1f ballPos){
   float arm_dist = 0.35;
   const int MSL = 200;
@@ -101,6 +107,7 @@ void ballTrack(cv::Mat1f ballPos){
   bridge.tx(s);
   snprintf(s,MSL,"regbot madd vel=%f:dist=%f\n", 0.2, dist);
   bridge.tx(s);
+  takeBall();
   bridge.tx("regbot start\n");
   cout << "Taking a ball...\n";
   event.waitForEvent(0);  
@@ -127,7 +134,7 @@ void golf_mission(){
 
 
 void aruco_mission(){
-  bool aruco = vision.doFindAruco(10);
+  bool aruco = vision.doFindAruco(30);
 }
 
 
