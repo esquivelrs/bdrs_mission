@@ -27,6 +27,8 @@
 #include "ubridge.h"
 #include "uvision.h"
 #include "utime.h"
+#include "uplay.h"
+#include "uevent.h"
 #include <opencv2/imgproc.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/core.hpp>
@@ -72,7 +74,7 @@ void UVision::setup(int argc, char **argv)
   int deviceID = dev;             // 0 = open default camera
   int apiID = cv::CAP_V4L2;  //cv::CAP_ANY;  // 0 = autodetect default API
   // open selected camera using selected API
-//   cap.set(cv::CAP_PROP_FRAME_WIDTH, 1280);
+  //   cap.set(cv::CAP_PROP_FRAME_WIDTH, 1280);
   cap.open(deviceID, apiID);
   // check if we succeeded
   camIsOpen = cap.isOpened();
@@ -194,253 +196,9 @@ bool UVision::getNewestFrame()
   return gotFrame;
 }
 
-bool UVision::processImage(float seconds)
-{ // process images in 'seconds' seconds
-  UTime t, t2, t3, t4; // for timing
-  t.now();
-  int n = 0;
-  int frameCnt = 0;
-  float frameSampleTime = 1.5; // seconds
-  while (t.getTimePassed() < seconds and camIsOpen and not terminate and n < 5)
-  { // skip the first 20 frames to allow auto-illumination to work
-    if (t4.getTimePassed() > frameSampleTime and frameSerial > 20)
-    { // do every 1.5 second (or sample time)
-      t4.now();
-      getNewestFrame();    
-      if (gotFrame)
-      { // process
-        printf("# got frame %d (%d) t=%.3f sec, dt=%.3f sec, size %dx%d\n", frameCnt, frameSerial, t.getTimePassed(), t2.getTimePassed(), frame.rows, frame.cols);
-        t2.now();
-        if (showImage)
-        {
-          t3.now();
-          cv::imshow("raw image", frame);
-          printf("Image show call took %.3f sec\n", t3.getTimePassed());
-          cv::waitKey(300);
-        }
-        if (saveImage)
-        { // save the image - with a number
-          const int MSL = 100;
-          char s[MSL];
-          snprintf(s, MSL, "sandberg_%03d.png", n);
-          t3.now();
-          cv::imwrite(s, frame);
-          printf("Image save took %.3f sec\n", t3.getTimePassed());
-        }
-        if (findBall and n > 2)
-        {
-          t3.now();
-          ballBoundingBox.clear();
-          terminate = doFindBall();
-          printf("Find ball took %.3f sec\n", t3.getTimePassed());
-          if (ballBoundingBox.size() >= 1)
-          { // test if the ball is on the floor
-            ballProjectionAndTest();
-          }
-        }
-        frameCnt++;
-      }
-      n++;
-    }
-    else
-      usleep(5000);
-  }
-  printf("# Ending vision loop (terminate=%d, camIsOpen=%d, n=%d\n", terminate, camIsOpen, n);
-  return terminate or not camIsOpen;
-}
-
-int UVision::uvDistance(cv::Vec3b pix, cv::Vec3b col)
-{ /// format is Y,V,U and Y is not used
-  /// returns 0 for total match
-  /// returns (block) distance in U,V space between pixel (pix) and color (col)
-  /// returns at maximum 255
-  int d = abs(pix[1] - col[1]) + abs(pix[2] - col[2]);
-  if (d > 255)
-    d = 255;
-  else if (d < 0)
-    d = 0;
-  return d;
-}
 
 
-bool UVision::doFindBall()
-{ // process pipeline to find
-  // bounding boxes of balls with matched colour
-  cv::Mat yuv;
-  //cv::imwrite("rgb_balls_01.png", frame);
-  cv::cvtColor(frame, yuv, cv::COLOR_BGR2YUV);
-  int h = yuv.rows;
-  int w = yuv.cols;
-  //cv::imwrite("yuv_balls_01.png", yuv);
-  printf("# YUV saved, size width=%d height=%d\n", w, h);
-  //
-  // color for filter
-  cv::Vec3b yuvOrange = cv::Vec3b(128,88,187);
-  cv::Mat gray1(h,w, CV_8UC1);
-  // test all pixels
-  for (int r = 0; r < h; r++)
-  { // get pointers to pixel-row for destination image
-    uchar * pOra = (uchar*) gray1.ptr(r); // gray
-    for (int c = 0; c < w; c++)
-    { // go through all pixels in this row
-      int d;
-      cv::Vec3b p = yuv.at<cv::Vec3b>(r,c);
-      d = uvDistance(p, yuvOrange);
-      *pOra = 255 - d;
-      pOra++; // increase to next destination pixel
-    }
-  }
-  cv::Mat gray2;
-  cv::threshold(gray1, gray2, 230, 255, 3);
-  //
-  // remove small items with a erode/delate
-  // last parameter is iterations, and could be increased
-  cv::Mat gray3, gray4;
-  cv::erode(gray2, gray3, cv::Mat(), cv::Point(-1,-1), 2);
-  cv::dilate(gray3, gray4, cv::Mat(), cv::Point(-1,-1), 2);
-  if (showImage)
-  { // show eroded/dilated image
-    cv::imshow("Thresholede image", gray2);
-    cv::imshow("Eroded/dilated image", gray4);
-    cv::waitKey(25); // 1 second
-  }
-  //
-  // find contours for further validation
-  vector<vector<cv::Point> > contours;
-  vector<cv::Vec4i> hierarchy; // not used, but needed
-  cv::findContours( gray4, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE );
-  if (showImage)
-  { // show the found contours for debug
-    cv::RNG rng(12345);
-    cv::Mat col4 = cv::Mat::zeros( gray4.size(), CV_8UC3 );
-    for( size_t i = 0; i< contours.size(); i++ )
-    {
-      cv::Scalar color = cv::Scalar( rng.uniform(0, 256), rng.uniform(0,256), rng.uniform(0,256) );
-      cv::drawContours( col4, contours, (int)i, color, 2, cv::LINE_8, hierarchy, 0 );
-    }
-    imshow( "Contours", col4);
-    cv::waitKey(10);
-  }
-  // Test for valid contours
-  if (showImage)
-    frame.copyTo(debugImg); // make copy of original image
-  // iterate all contours
-  for (int i = 0; i < (int)contours.size(); i++)
-  {
-    const vector<cv::Point>& ct = contours[i];
-    printf("# Contour %d has %d points\n", i, (int)ct.size());
-    // find boundingRect
-    cv::Rect bb = cv::boundingRect(ct);
-    // find longest side of bounding box
-    int mx = bb.height;
-    if (bb.width > mx)
-      mx = bb.width;
-    // half width
-    int mx2 = mx/2;
-    // filter for height and width should be fairly ewual - no more than 33% difference
-    // the bounding box should be bigger than 13x13 pixels (area > 200 pixels)
-    // the size should be less than 150 pixels
-    if (abs(bb.height - bb.width) < mx / 3 and bb.area() > 200 and mx < 150)
-    { // circle is OK so far
-      // test if content is the right color too
-      int okPixels = 0;
-      int usedPixelCnt = 0;
-      printf("# Object %d at %d,%d and width=%d, height=%d passed the size criteria\n", i, bb.x, bb.y, bb.width, bb.height);
-      for (int r = 0; r < bb.height; r++)
-      {
-        uchar * pix = (uchar*) gray4.ptr(r + bb.y); // gray
-        pix += bb.x;
-        for (int c = 0; c < bb.width; c++)
-        { // count pixels with right colour not from a circle
-          // but use of a diamond shaped area is faster:
-          // the sum of row and column distance from center 
-          // should be less than half width of bounding box
-          if ((abs(c - mx2) + abs(r - mx2)) < mx2)
-          { // this should be inside the ball, and the colour counts
-            okPixels += *pix; // add the pixel value (230..255, or 0 if not right)
-            pix++; // move to next pixel
-            usedPixelCnt++; // count the pixel for average
-          }
-        }
-      }
-      float avg = (float)okPixels / float(usedPixelCnt*255);
-      printf("#  -- has %d of %d as the right color, average is %g\n", okPixels, (int)bb.area(), avg);
-      // filter on average color inside bounding box diamond (more than 60% has OK color)
-      if (avg > 0.6)
-      { // should be counted as OK, add to list of bounding boxes
-        ballBoundingBox.push_back(bb);
-        // draw the box on the color image
-        if (showImage)
-          cv::rectangle(debugImg, bb.tl(), bb.br(), cv::Vec3b(230,0,155), 2 );
-      }
-    }
-  }
-  printf("Found %d/%d balls filtered for size and average color\n", 
-         (int)ballBoundingBox.size(), (int)contours.size());
-  if (showImage)
-  {
-    imshow("Debug image", debugImg);  
-  }
-  return true;
-}
-
-
-void UVision::ballProjectionAndTest()
-{
-  bool done = ballBoundingBox.size() == 0;
-  if (not done)
-  {
-    for (int i = 0; i < (int)ballBoundingBox.size(); i++)
-    {
-      printf("---\n");
-      cv::Rect bb = ballBoundingBox[i];
-      float diaPix = std::max(bb.width, bb.height);
-      /// use focal length to find distance
-      //       diaPix    golfDia
-      //       ------ = --------
-      //          f        x
-      // f = focal length, x = distance to ball
-      float dist = golfBallDiameter * focalLength / float(diaPix);
-      // the position in x (right) and y (down)
-      float bbCenter[2] = {bb.x + bb.width/2.0f, bb.y + bb.height/2.0f};
-      float frameCenter[2] = {frame.cols/2.0f, frame.rows/2.0f};
-      // distance right of image center line - in meters
-      float x = (bbCenter[0] - frameCenter[0])/focalLength * dist;
-      // distance below image center line - in meters
-      float y = (bbCenter[1] - frameCenter[1])/focalLength * dist;
-      // make a vector of ball center with (x=forward, y=left, z=up)
-      cv::Vec4f pos3dcam(dist, -x, -y, 1.0f);
-      printf("# ball %d position in cam   coordinates (x,y,z)=(%.2f, %.2f, %.2f)\n", i, 
-             pos3dcam[0], pos3dcam[1], pos3dcam[2]);
-      // print used matrices and vector
-      //  cout << "camToRobot: " << camToRobot << "\n";
-      //  cout << "# pos3dcam  : " << pos3dcam << "\n";
-      cv::Mat1f pos3drob = camToRobot * pos3dcam;
-      printf("# ball %d position in robot coordinates (x,y,z)=(%.2f, %.2f, %.2f)\n", i, 
-             pos3drob.at<float>(0), pos3drob.at<float>(1), pos3drob.at<float>(2));
-      //
-      if (showImage)
-      { // put coordinates in debug image
-        const int MSL = 100;
-        char s[MSL];
-        snprintf(s, MSL, "Ball %d at x=%.2f, y=%.2f, z=%.2f\n", i, pos3drob.at<float>(0), pos3drob.at<float>(1), pos3drob.at<float>(2));
-        cv::putText(debugImg, s, cv::Point(bbCenter[0], bbCenter[1]), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 156));
-        //
-        imshow("Debug image", debugImg);
-        if (saveImage)
-          cv::imwrite("annotated_debug_image.jpg", debugImg);          
-      }
-    }
-  }
-  if (showImage)
-  {
-    printf("# projection done - press key to finish\n");
-    cv::waitKey(0);
-  }
-}
-
-
-bool UVision::getball(){
+bool UVision::getBalls(){
   Vec3i max_circle(0,0,0);
   Mat frame_HSV, frame_gray, frame_threshold, frame_ed;
   cv::cvtColor(frame, frame_gray, COLOR_BGR2GRAY);
@@ -522,12 +280,7 @@ bool UVision::getball(){
 }
 
 
-float euclideanDistance(const cv::Mat1f& v1, const cv::Mat1f& v2) {
-    cv::Mat1f diff = v1 - v2;
-    return cv::sqrt(diff.dot(diff));
-}
-
-bool UVision::get_ball(float seconds)
+bool UVision::findBalls(float seconds)
 {
   printf("# GET BALL\n");
   float distanceThreshold = 5.0;
@@ -535,15 +288,11 @@ bool UVision::get_ball(float seconds)
   cv::Mat1f accumulated = cv::Mat1f::zeros(1, 3);  // Accumulated sum
   int numSamples = 0;
 
-  // VideoCapture cap(0);
-  // if (!cap.isOpened()) {
-  // cout << "cannot open camera";
-  // }
 
   UTime t;
   t.now();
 
-  while (t.getTimePassed()< 1){
+  while (frameSerial < 30){
     cout << "# wait for the first frames\n";
     getNewestFrame(); 
 
@@ -553,7 +302,7 @@ bool UVision::get_ball(float seconds)
 
 
   //while (t.getTimePassed() < seconds and camIsOpen and not terminate and n<5) {
-  while (t.getTimePassed() < seconds and camIsOpen and not terminate) {
+  while (t.getTimePassed() < seconds and camIsOpen and not terminate and numSamples < 10) {
     //cap >> image;
 
     getNewestFrame(); 
@@ -561,7 +310,7 @@ bool UVision::get_ball(float seconds)
 
     if (gotFrame){
 
-      bool ball = getball();
+      bool ball = getBalls();
       if (ball==true){
 
         printf("# ball %d position in robot coordinates (x,y,z)=(%.2f, %.2f, %.2f)\n", 
@@ -625,6 +374,84 @@ bool UVision::get_ball(float seconds)
 
 
 }
+
+void UVision::ballTrack(cv::Mat1f ballPos){
+  float arm_dist = 0.20;
+  const int MSL = 200;
+  char s[MSL];
+  double radians = atan(ballPos.at<float>(0, 1) / ballPos.at<float>(0, 0));
+  double degrees = radians * (180.0 / M_PI);
+
+
+  float dist = sqrt(pow(ballPos.at<float>(0, 1),2) + pow(ballPos.at<float>(0, 0),2)) - arm_dist;
+
+  //float x_p = 
+
+  std::cout << "Angle " << degrees << " degrees " << " Distance: "<< dist << std::endl;
+  sound.say(". Ball Found.", 0.3);
+  // remove old mission
+  bridge.tx("regbot mclear\n");
+  // clear events received from last mission
+  event.clearEvents();
+  //usleep(2000);
+
+  bridge.tx("regbot madd vel=0.0, log=3.0: time=0.02\n");
+
+  snprintf(s,MSL,"regbot madd vel=%.2f,tr=0.2:turn=%.1f\n", 0.2, degrees);
+  bridge.tx(s);
+  std::cout << s << std::endl;
+
+  bridge.tx("regbot madd vel=0.0, log=3.0: time=0.02\n");
+
+  snprintf(s,MSL,"regbot madd vel=0.2:dist=%.3f\n", dist);
+  std::cout << s << std::endl;
+  bridge.tx(s);
+
+  bridge.tx("regbot madd vel=0.0: time=0.01\n");
+
+  bridge.tx("regbot start\n");
+  cout << "Taking a ball...\n";
+  event.waitForEvent(0);  
+}
+
+void UVision::takeBall(){
+  //servo=1,pservo=-600, vservo=120:time=8
+
+  bridge.tx("regbot mclear\n");
+  // clear events received from last mission
+  event.clearEvents();
+  //usleep(2000);
+ 
+  bridge.tx("regbot madd servo=1,pservo=-600,vservo=120:time=8\n");
+  bridge.tx("regbot madd servo=1,pservo=200,vservo=120:time=8\n");
+
+  bridge.tx("regbot start\n");
+  cout << "Taking a ball...\n";
+  event.waitForEvent(0); 
+
+}
+
+bool UVision::golf_mission(){
+  int n = 1;
+  UTime t;
+  t.now();
+
+  while(n<2 and t.getTimePassed() < 50){
+  //while(n<6){
+    bool ball = findBalls(5);
+    if (ball == true){
+      std::cout << "# BALL FOUND "<< n <<" Pos: " << ballPossition << "\n";
+      ballTrack(ballPossition);
+      //usleep(2000);
+      takeBall();
+      
+      n +=1;
+    }
+
+  }
+  return true;
+}
+
 
 
 bool UVision::doFindAruco(float seconds)

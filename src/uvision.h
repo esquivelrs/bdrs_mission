@@ -59,7 +59,7 @@ public:
   bool processImage(float seconds);
   /**
    * Stream to screen - if any screen is available */
-  bool get_ball(float seconds);
+  bool golf_mission();
   /**
    * Stream to screen - if any screen is available */
   bool doFindAruco(float seconds);
@@ -96,7 +96,6 @@ public:
 //                                          -st, 0.f, ct, camPos[2];
 //                                          0.f ,  0.f, 0.f , 1.f);
 
-  cv::Mat1f ballPossition;
 
 
  
@@ -133,9 +132,13 @@ private:
    * \returns d = |du| + |dv| */
   int uvDistance(cv::Vec3b pix, cv::Vec3b col);
 
-  //Vec3i max_circle;
+  //Golf Variables
   cv::Mat1f pos3drob;
-  bool getball();
+  cv::Mat1f ballPossition;
+  bool getBalls();
+  bool findBalls(float seconds);
+  void ballTrack(cv::Mat1f ballPos);
+  void takeBall();
 
   
 };

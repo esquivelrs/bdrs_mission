@@ -112,6 +112,8 @@ CMakeFiles/mission.dir/src/utime.cpp.o
  /home/local/mission/src/utime.h
 CMakeFiles/mission.dir/src/uvision.cpp.o
  /home/local/mission/src/ubridge.h
+ /home/local/mission/src/uevent.h
+ /home/local/mission/src/uplay.h
  /home/local/mission/src/utime.h
  /home/local/mission/src/uvision.cpp
  /home/local/mission/src/uvision.h
