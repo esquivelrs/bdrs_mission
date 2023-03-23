@@ -37,6 +37,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <math.h>
+#include <map>
 #include <opencv2/core/types.hpp>
 
 #include <opencv2/core.hpp>
@@ -134,11 +135,16 @@ private:
 
   //Golf Variables
   cv::Mat1f pos3drob;
+  vector<cv::Vec3i> balls_matrix;
+
+  std::map<float, cv::Mat1f> balls_dict;
+
   cv::Mat1f ballPossition;
   bool getBalls();
   bool findBalls(float seconds);
   void ballTrack(cv::Mat1f ballPos);
   void takeBall();
+  cv::Mat1f calc_pos3drob(cv::Vec3i max_circle);
 
   
 };

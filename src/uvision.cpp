@@ -36,6 +36,7 @@
 #include <iostream>
 #include <iostream>
 #include<iostream>
+#include <map>
 using namespace std;
 using namespace cv;
 
@@ -197,9 +198,33 @@ bool UVision::getNewestFrame()
 }
 
 
+cv::Mat1f UVision::calc_pos3drob(cv::Vec3i circle){
+  int radio = circle[2];
+  float dist = golfBallDiameter * focalLength / float(radio*2);
+  // the position in x (right) and y (down)
+
+  float bbCenter[2] = {circle[0], circle[1]};
+  float frameCenter[2] = {frame.cols/2.0f, frame.rows/2.0f};
+
+  // distance right of image center line - in meters
+  float x = (bbCenter[0] - frameCenter[0])/focalLength * dist;
+  // distance below image center line - in meters
+  float y = (bbCenter[1] - frameCenter[1])/focalLength * dist;
+  // make a vector of ball center with (x=forward, y=left, z=up)
+  cv::Vec4f pos3dcam(dist, -x, -y, 1.0f);
+  // printf("# ball %d position in cam   coordinates (x,y,z)=(%.2f, %.2f, %.2f)\n", 
+  //       pos3dcam[0], pos3dcam[1], pos3dcam[2]);
+  // print used matrices and vector
+  // cout << "camToRobot: " << camToRobot << "\n";
+  // cout << "# pos3dcam  : " << pos3dcam << "\n";
+  cv::Mat1f pos3drobot = camToRobot * pos3dcam;
+  
+  return pos3drobot;       
+}
 
 bool UVision::getBalls(){
-  Vec3i max_circle(0,0,0);
+  bool ball= false;
+  Vec3i f_circle(0,0,0);
   Mat frame_HSV, frame_gray, frame_threshold, frame_ed;
   cv::cvtColor(frame, frame_gray, COLOR_BGR2GRAY);
   cv::GaussianBlur(frame_gray, frame_gray, Size(7, 7), 0);
@@ -237,46 +262,19 @@ bool UVision::getBalls(){
           cv::circle( frame, center, radius, Scalar(255,0,255), 3, LINE_AA);
           std::string text = "BALL FOUND: (" + std::to_string(center.x) + ", " + std::to_string(center.y) + ")" + " radio: " + std::to_string(c[2]) + "hsv" + std::to_string(hue) + "," + std::to_string(sat)+ "," + std::to_string(val); 
           cv::putText(frame, text, center, cv::FONT_HERSHEY_DUPLEX, 0.4, cv::Scalar(0,0,0), 2, false);
-          if (max_circle[2]<radius){
-            max_circle[0] = c[0];
-            max_circle[1] = c[1];
-            max_circle[2] = radius;
+          
+          f_circle[0] = c[0];
+          f_circle[1] = c[1];
+          f_circle[2] = radius;
 
-          }
+          balls_dict[radius] = calc_pos3drob(f_circle);
+          ball = true;
 
 
         }
       }
   }
-
-  bool ball= false;
-  if (0<max_circle[2]){
-      cout << "TRACKING BALL: " << max_circle;
-      int radio = max_circle[2];
-      float dist = golfBallDiameter * focalLength / float(radio*2);
-      // the position in x (right) and y (down)
-
-      float bbCenter[2] = {max_circle[0], max_circle[1]};
-      float frameCenter[2] = {frame.cols/2.0f, frame.rows/2.0f};
-
-      // distance right of image center line - in meters
-      float x = (bbCenter[0] - frameCenter[0])/focalLength * dist;
-      // distance below image center line - in meters
-      float y = (bbCenter[1] - frameCenter[1])/focalLength * dist;
-      // make a vector of ball center with (x=forward, y=left, z=up)
-      cv::Vec4f pos3dcam(dist, -x, -y, 1.0f);
-      // printf("# ball %d position in cam   coordinates (x,y,z)=(%.2f, %.2f, %.2f)\n", 
-      //       pos3dcam[0], pos3dcam[1], pos3dcam[2]);
-      // print used matrices and vector
-      // cout << "camToRobot: " << camToRobot << "\n";
-      // cout << "# pos3dcam  : " << pos3dcam << "\n";
-      pos3drob = camToRobot * pos3dcam;
-      ball = true;
-            
-  }
-  //Vec3i max_circle(0,0,0);
   return ball;
-
 }
 
 
@@ -312,6 +310,17 @@ bool UVision::findBalls(float seconds)
 
       bool ball = getBalls();
       if (ball==true){
+
+        float max_radius = std::numeric_limits<float>::min();
+        for (const auto& it : balls_dict)
+        {
+            if (it.first > max_radius)
+            {
+                max_radius = it.first;
+                pos3drob = it.second;
+            }
+        }
+        
 
         printf("# ball %d position in robot coordinates (x,y,z)=(%.2f, %.2f, %.2f)\n", 
               pos3drob.at<float>(0), pos3drob.at<float>(1), pos3drob.at<float>(2));
@@ -403,7 +412,7 @@ void UVision::ballTrack(cv::Mat1f ballPos){
 
   bridge.tx("regbot madd vel=0.0, log=3.0: time=0.02\n");
 
-  snprintf(s,MSL,"regbot madd vel=0.2:dist=%.3f\n", dist);
+  snprintf(s,MSL,"regbot madd vel=0.2:dist=%.2f\n", dist);
   std::cout << s << std::endl;
   bridge.tx(s);
 
