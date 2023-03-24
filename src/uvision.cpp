@@ -320,6 +320,8 @@ bool UVision::findBalls(float seconds)
                 pos3drob = it.second;
             }
         }
+
+        balls_dict.erase(max_radius);
         
 
         printf("# ball %d position in robot coordinates (x,y,z)=(%.2f, %.2f, %.2f)\n", 
