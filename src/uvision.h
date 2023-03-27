@@ -39,6 +39,9 @@
 #include <math.h>
 #include <map>
 #include <opencv2/core/types.hpp>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
 
 #include <opencv2/core.hpp>
 #include <opencv2/videoio.hpp>
@@ -75,6 +78,7 @@ public:
   bool terminate = false;
   /// show image to X-terminal
   bool showImage = false;
+  bool streaming = false;
   /**
     * images for manual function using slider */
   cv::Mat dest;
@@ -153,6 +157,8 @@ private:
   bool findfHole();
 
 
+  int server_fd, new_socket;
+  struct sockaddr_in address;
   
 
   

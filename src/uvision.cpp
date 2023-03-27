@@ -35,14 +35,17 @@
 #include <opencv2/aruco.hpp>
 #include <opencv2/opencv.hpp>
 #include <iostream>
-#include <iostream>
-#include<iostream>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
 #include <map>
 using namespace std;
 using namespace cv;
 
 // create the vision object
 UVision vision;
+
+#define PORT 8080
 
 
 // class implementation:
@@ -65,6 +68,8 @@ void UVision::setup(int argc, char **argv)
       findAruco = true;
     if (strcmp(argv[i], "show") == 0)
       showImage = true;
+    if (strcmp(argv[i], "streaming") == 0)
+      streaming = true;
     if (strncmp(argv[i], "video", 5) == 0)
     {
       const char * p1 = argv[i];
@@ -138,7 +143,54 @@ void UVision::setup(int argc, char **argv)
   std::cout << "Camera matrix: " << std::endl << camera_matrix << std::endl;
   std::cout << "Distortion coefficients: " << std::endl << dist_coeffs << std::endl;
 
+  if (streaming){
 
+    std::cout << "CONNECTION SETUP!!!"  << std::endl;
+
+    int server_fd, opt = 1;
+    struct sockaddr_in address;
+    int addrlen = sizeof(address);
+
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+        std::cerr << "socket failed"<< std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
+        std::cerr << "setsockopt"<< std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = htonl(INADDR_ANY);
+    address.sin_port = htons(PORT);
+
+    std::cout << "CONNECTION33!!!"  << std::endl;
+    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
+        std::cerr << "bind failed"<< std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    std::cout << "CONNECTION44!!!"  << std::endl;
+    if (listen(server_fd, 3) < 0) {
+        std::cerr << "listen"<< std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    std::cout << "CONNECTION55!!!"  << std::endl;
+
+    if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
+        std::cerr << "accept"<< std::endl;
+        exit(EXIT_FAILURE);
+    }
+    std::cout << "CONNECTION66!!!"  << std::endl;
+
+    close(server_fd);
+
+    std::cout << "CONNECTION!!!"  << std::endl;
+
+
+  }
 
 }
 
@@ -152,6 +204,7 @@ void UVision::stop()
     // close
     cap.release();
   }
+  close(new_socket);
 }
 
 bool UVision::decode(char* msg)
@@ -473,6 +526,26 @@ bool UVision::loopFrames(float seconds, string obj)
       {
         imshow("IMG_FRAMES", frame_ud);
         imshow("RAW", frame);
+
+      }
+      
+      if (streaming){
+        int imgSize = frame_ud.total() * frame_ud.elemSize();
+        uchar* img = frame_ud.data;
+        int n = 0, len = 0;
+        while (len < imgSize) {
+            n = send(new_socket, img + len, imgSize - len, 0);
+            if (n == -1) {
+                cerr << "ERROR: Send failed" << endl;
+                break;
+            }
+            len += n;
+        }
+        if (len == -1) {
+            break;
+        }
+
+
       }
 
       waitKey(25);
