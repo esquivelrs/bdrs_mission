@@ -85,6 +85,7 @@ public:
    * focal length for Sandberg camera in pixels */
   const int focalLength = 1008;
   const float golfBallDiameter = 0.043; // meter
+  const float holeDiameter = 0.1; // meter
   /**
    * camera position in robot coordinates (x (forward), y (left), z (up)) */
   const float camPos[3] = {0.225,0.0, 0.20};       // in meters
@@ -103,7 +104,8 @@ public:
   
 private:
   /// buffer for captured image
-  cv::Mat frame;
+  cv::Mat frame, frame_ud;
+  cv::Mat camera_matrix, dist_coeffs;
   /// openCV video capture function
   cv::VideoCapture cap;
   /// thread to keep buffer empty
@@ -139,12 +141,19 @@ private:
 
   std::map<float, cv::Mat1f> balls_dict;
 
-  cv::Mat1f ballPossition;
+
+  cv::Mat1f holePos;
+
+  cv::Mat1f objPossition;
   bool getBalls();
-  bool findBalls(float seconds);
+  bool loopFrames(float seconds, string obj);
   void ballTrack(cv::Mat1f ballPos);
   void takeBall();
-  cv::Mat1f calc_pos3drob(cv::Vec3i max_circle);
+  cv::Mat1f calc_pos3drob(cv::Vec3i obj, float diameter);
+  bool findfHole();
+
+
+  
 
   
 };

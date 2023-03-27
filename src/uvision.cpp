@@ -33,6 +33,7 @@
 #include <opencv2/core/types.hpp>
 #include <opencv2/core.hpp>
 #include <opencv2/aruco.hpp>
+#include <opencv2/opencv.hpp>
 #include <iostream>
 #include <iostream>
 #include<iostream>
@@ -122,7 +123,6 @@ void UVision::setup(int argc, char **argv)
   //READ CALIBRATION FILE
   cv::FileStorage fs("../calibration.yaml", cv::FileStorage::READ);
 
-  cv::Mat camera_matrix, dist_coeffs;
 
   if (fs.isOpened())
   {
@@ -137,6 +137,7 @@ void UVision::setup(int argc, char **argv)
 
   std::cout << "Camera matrix: " << std::endl << camera_matrix << std::endl;
   std::cout << "Distortion coefficients: " << std::endl << dist_coeffs << std::endl;
+
 
 
 }
@@ -173,6 +174,11 @@ void UVision::loop()
       // mark as available
       gotFrame = not frame.empty();
       useFrame = not gotFrame;
+      if (gotFrame){
+        undistort(frame, frame_ud, camera_matrix, dist_coeffs);
+
+      }
+
     }
     else
       // just grab the image - mark it as used
@@ -198,12 +204,12 @@ bool UVision::getNewestFrame()
 }
 
 
-cv::Mat1f UVision::calc_pos3drob(cv::Vec3i circle){
-  int radio = circle[2];
-  float dist = golfBallDiameter * focalLength / float(radio*2);
+cv::Mat1f UVision::calc_pos3drob(cv::Vec3i obj, float diameter){
+  int radio = obj[2];
+  float dist = diameter * focalLength / float(radio*2);
   // the position in x (right) and y (down)
 
-  float bbCenter[2] = {circle[0], circle[1]};
+  float bbCenter[2] = {obj[0], obj[1]};
   float frameCenter[2] = {frame.cols/2.0f, frame.rows/2.0f};
 
   // distance right of image center line - in meters
@@ -222,17 +228,24 @@ cv::Mat1f UVision::calc_pos3drob(cv::Vec3i circle){
   return pos3drobot;       
 }
 
+
+
 bool UVision::getBalls(){
   bool ball= false;
   Vec3i f_circle(0,0,0);
   Mat frame_HSV, frame_gray, frame_threshold, frame_ed;
-  cv::cvtColor(frame, frame_gray, COLOR_BGR2GRAY);
+  cv::cvtColor(frame_ud, frame_gray, COLOR_BGR2GRAY);
   cv::GaussianBlur(frame_gray, frame_gray, Size(7, 7), 0);
 
   vector<Vec3f> circles;
+  // cv::HoughCircles(frame_gray, circles, HOUGH_GRADIENT, 1,
+  //             frame_gray.rows/4,  // change this value to detect circles with different distances to each other
+  //             200, 5, 40, 100 // change the last two parameters
+  //         // (min_radius & max_radius) to detect larger circles
+  // );
   cv::HoughCircles(frame_gray, circles, HOUGH_GRADIENT, 1,
               frame_gray.rows/4,  // change this value to detect circles with different distances to each other
-              200, 5, 40, 100 // change the last two parameters
+              100, 10, 40, 100 // change the last two parameters
           // (min_radius & max_radius) to detect larger circles
   );
   for( size_t i = 0; i < circles.size(); i++ )
@@ -244,7 +257,7 @@ bool UVision::getBalls(){
 
       if (0<(c[0]-c[2]/4) && (c[0]+c[2]/4)<frame.cols && 0<(c[1]-c[2]/4) && (c[1]+c[2]/4)<frame.rows){
         
-        cv::cvtColor(frame, frame_HSV, COLOR_BGR2HSV);
+        cv::cvtColor(frame_ud, frame_HSV, COLOR_BGR2HSV);
         cv::Mat roi = frame_HSV(cv::Range(c[1]-c[2]/4, c[1]+c[2]/4), cv::Range(c[0]-c[2]/4, c[0]+c[2]/4));
         cv::Mat1b mask(roi.rows, roi.cols);
         cv::Scalar mean = cv::mean(roi, mask);
@@ -253,21 +266,22 @@ bool UVision::getBalls(){
         int val = round(mean[2]);
         cout << "CIRCLE FOUND: " << center << " radio: " << c[2] << " hue: " << hue << " sat: " << sat << " val: " << val <<"\n";
 
-        if (hue< 40 and val>200){
+        if (hue< 40 and val>180){
+        //if (hue< 30){
           cout << "BALL FOUND: " << center;
           cout << " radio: " << c[2] << " hue: " << hue << "\n";
-          cv::circle( frame, center, 1, Scalar(0,100,100), 3, LINE_AA);
+          cv::circle( frame_ud, center, 1, Scalar(0,100,100), 3, LINE_AA);
           // circle outline
           int radius = c[2];
-          cv::circle( frame, center, radius, Scalar(255,0,255), 3, LINE_AA);
+          cv::circle( frame_ud, center, radius, Scalar(255,0,255), 3, LINE_AA);
           std::string text = "BALL FOUND: (" + std::to_string(center.x) + ", " + std::to_string(center.y) + ")" + " radio: " + std::to_string(c[2]) + "hsv" + std::to_string(hue) + "," + std::to_string(sat)+ "," + std::to_string(val); 
-          cv::putText(frame, text, center, cv::FONT_HERSHEY_DUPLEX, 0.4, cv::Scalar(0,0,0), 2, false);
+          cv::putText(frame_ud, text, center, cv::FONT_HERSHEY_DUPLEX, 0.4, cv::Scalar(0,0,0), 2, false);
           
           f_circle[0] = c[0];
           f_circle[1] = c[1];
           f_circle[2] = radius;
 
-          balls_dict[radius] = calc_pos3drob(f_circle);
+          balls_dict[radius] = calc_pos3drob(f_circle, golfBallDiameter);
           ball = true;
 
 
@@ -277,10 +291,111 @@ bool UVision::getBalls(){
   return ball;
 }
 
+bool UVision::findfHole(){
+  cout << "FIND HOLE\n";
+  bool hole= false;
+  Vec3i f_hole(0,0,0);
+  Mat frame_HSV, frame_gray, frame_threshold, frame_ed;
+  cv::cvtColor(frame_ud, frame_HSV, COLOR_BGR2HSV);
+  cv::blur(frame_HSV, frame_HSV, cv::Size(5, 5));
+  // Lower values: 210.678 81.12039999999999 74.228
+  // Upper values: 230.678 181.1204 174.228
+  
+  cv::inRange(frame_HSV, Scalar(90,0,150), Scalar(116, 255, 255),frame_threshold);
+  //cv::inRange(frame_YUV, Scalar(210,80,74), Scalar(230, 181, 174),frame_threshold);
+  //cv::inRange(frame_YUV, Scalar(165,130,120), Scalar(200, 140, 135),frame_threshold);
 
-bool UVision::findBalls(float seconds)
+  cv::erode(frame_threshold, frame_ed, cv::Mat(), cv::Point(-1,-1), 2);
+  cv::dilate(frame_ed, frame_ed, cv::Mat(), cv::Point(-1,-1), 2);
+
+  // //
+  // // find contours for further validation
+  // vector<vector<cv::Point> > contours;
+  // vector<cv::Vec4i> hierarchy; // not used, but needed
+  // cv::findContours(frame_ed, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE );
+
+  // cv::Moments moments = cv::moments(contours[0]);
+
+  // // Get the centroid of the largest contour
+  // cv::Point2f centroid(moments.m10 / moments.m00, moments.m01 / moments.m00);
+
+  // // Get the area of the largest contour
+  // double area = cv::contourArea(contours[0]);
+
+  // // Print the centroid and area
+  // std::cout << "Centroid: (" << centroid.x << ", " << centroid.y << ")" << std::endl;
+  // std::cout << "Area: " << area << std::endl;
+
+  // if (area>40){
+  //   // Draw the largest contour and its centroid on a new image
+  //   cv::Mat result = cv::Mat::zeros(frame_ed.size(), CV_8UC3);
+  //   cv::drawContours(frame, contours, 0, cv::Scalar(0, 255, 0), 2);
+  //   cv::circle(frame, centroid, 5, cv::Scalar(0, 0, 255), -1);
+
+  //   f_hole[0] = moments.m10 / moments.m00;
+  //   f_hole[1] = moments.m01 / moments.m00;
+  //   f_hole[2] = sqrt(area)/2;
+
+  //   holePos = calc_pos3drob(f_hole, holeDiameter);
+  //   hole = true;
+    
+  // }
+
+
+  cv::Mat labels, stats, centroids;
+  int num_labels = cv::connectedComponentsWithStats(frame_ed, labels, stats, centroids);
+  cv::Mat result = cv::Mat::zeros(frame_ed.size(), CV_8UC3);
+  int max_area = -1;
+  int max_label = -1;
+  for (int i = 1; i < num_labels; i++) {
+      int area = stats.at<int>(i, cv::CC_STAT_AREA);
+      if (area > max_area) {
+          max_area = area;
+          max_label = i;
+      }
+  }
+
+
+  // Print the centroid and area
+  std::cout << "Centroid: (" << centroids.at<double>(max_label, 0) << ", " << centroids.at<double>(max_label, 1) << ")" << std::endl;
+  std::cout << "Area: " << max_area << std::endl;
+
+  if (max_area>40){
+
+
+    f_hole[0] = centroids.at<double>(max_label, 0);
+    f_hole[1] = centroids.at<double>(max_label, 1);
+    f_hole[2] = stats.at<int>(max_label, cv::CC_STAT_WIDTH)/2;
+
+    holePos = calc_pos3drob(f_hole, holeDiameter);
+    hole = true;
+    
+  }
+
+  if (showImage)
+  {
+    imshow("HOLE", frame_ed);
+    // Draw bounding box around the component with the maximum area
+    if (max_label != -1) {
+        cv::Rect bbox(stats.at<int>(max_label, cv::CC_STAT_LEFT),
+                      stats.at<int>(max_label, cv::CC_STAT_TOP),
+                      stats.at<int>(max_label, cv::CC_STAT_WIDTH),
+                      stats.at<int>(max_label, cv::CC_STAT_HEIGHT));
+        cv::rectangle(frame_ud, bbox, cv::Scalar(0, 0, 255), 2);
+    }
+
+    imshow("HOLE_HSV", frame_HSV);
+  }
+
+
+  return hole;
+}
+
+
+
+bool UVision::loopFrames(float seconds, string obj)
 {
-  printf("# GET BALL\n");
+  cout << "# LOOP FRAMES FOR" << obj << "\n";
   float distanceThreshold = 5.0;
   vector<cv::Mat1f> samples;
   cv::Mat1f accumulated = cv::Mat1f::zeros(1, 3);  // Accumulated sum
@@ -300,31 +415,44 @@ bool UVision::findBalls(float seconds)
 
 
   //while (t.getTimePassed() < seconds and camIsOpen and not terminate and n<5) {
-  while (t.getTimePassed() < seconds and camIsOpen and not terminate and numSamples < 10) {
+  while (t.getTimePassed() < seconds and camIsOpen and not terminate and numSamples < 40) {
     //cap >> image;
 
     getNewestFrame(); 
 
-
+    bool found = false;
     if (gotFrame){
+      if (obj == "BALL"){
+        found = getBalls();
+        if (found==true){
 
-      bool ball = getBalls();
-      if (ball==true){
+          float max_radius = std::numeric_limits<float>::min();
+          for (const auto& it : balls_dict)
+          {
+              if (it.first > max_radius)
+              {
+                  max_radius = it.first;
+                  pos3drob = it.second;
+              }
+          }
 
-        float max_radius = std::numeric_limits<float>::min();
-        for (const auto& it : balls_dict)
-        {
-            if (it.first > max_radius)
-            {
-                max_radius = it.first;
-                pos3drob = it.second;
-            }
+          balls_dict.erase(max_radius);
         }
+      }
 
-        balls_dict.erase(max_radius);
+
+      if (obj == "HOLE"){
+        found = findfHole();
+        if (found==true){
+          pos3drob = holePos;
+        }
+      }
+
+
+
+      if (found==true){
         
-
-        printf("# ball %d position in robot coordinates (x,y,z)=(%.2f, %.2f, %.2f)\n", 
+        printf("# Object position in robot coordinates (x,y,z)=(%.2f, %.2f, %.2f)\n", 
               pos3drob.at<float>(0), pos3drob.at<float>(1), pos3drob.at<float>(2));
         
         std::vector<float> sample = pos3drob;
@@ -343,7 +471,8 @@ bool UVision::findBalls(float seconds)
 
       if (showImage)
       {
-        imshow("BALLS", frame);
+        imshow("IMG_FRAMES", frame_ud);
+        imshow("RAW", frame);
       }
 
       waitKey(25);
@@ -366,10 +495,10 @@ bool UVision::findBalls(float seconds)
   for (auto& sample : filteredSamples) {
       filteredAccumulated += sample;
   }
-  ballPossition = filteredAccumulated / static_cast<float>(filteredSamples.size());
+  objPossition = filteredAccumulated / static_cast<float>(filteredSamples.size());
 
   // Print mean
-  cout << "Mean: " << ballPossition << std::endl;
+  cout << "Mean: " << objPossition << std::endl;
   cout << "Samples " << samples.size() << std::endl;
 
   if (samples.size()>5){
@@ -442,6 +571,9 @@ void UVision::takeBall(){
 
 }
 
+
+
+
 bool UVision::golf_mission(){
   int n = 1;
   UTime t;
@@ -449,17 +581,27 @@ bool UVision::golf_mission(){
 
   while(n<2 and t.getTimePassed() < 50){
   //while(n<6){
-    bool ball = findBalls(5);
-    if (ball == true){
-      std::cout << "# BALL FOUND "<< n <<" Pos: " << ballPossition << "\n";
-      ballTrack(ballPossition);
+    bool res = false;
+    //res = loopFrames(20, "BALL");
+    if (res == true){
+      std::cout << "# BALL FOUND "<< n <<" Pos: " << objPossition << "\n";
+      ballTrack(objPossition);
       //usleep(2000);
       takeBall();
-      
+      n +=1;
+    }
+    //res = 
+    res = loopFrames(60, "HOLE");
+    if (res == true){
+      std::cout << "# HOLE FOUND "<< n <<" Pos: " << objPossition << "\n";
+      ballTrack(objPossition);
       n +=1;
     }
 
+
   }
+
+
   return true;
 }
 
