@@ -1,5 +1,5 @@
-#ifndef UIRDISTANCE_H
-#define UIRDISTANCE_H
+#ifndef UENCODER_H
+#define UENCODER_H
 
 #include <iostream>
 #include <sys/time.h>
@@ -18,16 +18,19 @@
 using namespace std;
 
 
-class UIrdistance{
-    public:
+class UEncoder{
+
+public:
 
     void setup();
         \returns
     bool decode(char * msg)
 
-    public:
-
-     mutex dataLock;
+public:
+    int e1, e2;
+    mutex dataLock;
 };
 
-extern Uirdistance irdistance;
+extern UEncoder enc;
+
+#endif
