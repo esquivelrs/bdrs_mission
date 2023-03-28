@@ -30,7 +30,7 @@
 #include "src/ustate.h"
 #include "src/uplay.h"
 #include "src/uevent.h"
-#include "src/uirdistance.h"
+#include "src/uencoder.h"
 
 // to avoid writing std:: 
 using namespace std;
@@ -57,7 +57,7 @@ void setup(int argc, char **argv)
     state.setup();
     vision.setup(argc, argv);
     event.setup();
-    irdistance.setup();
+    encoder.setup();
     printf("# Setup finished OK\n");
   }
   else

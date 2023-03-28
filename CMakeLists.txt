@@ -19,7 +19,7 @@ add_executable(mission main.cpp
                             src/utime.cpp
                             src/uplay.cpp
                             src/uevent.cpp
-                            src(uirdistance.cpp)
+                            src/uencoder.cpp
                             )
 
 target_link_libraries(mission ${OpenCV_LIBS} ${CMAKE_THREAD_LIBS_INIT})
