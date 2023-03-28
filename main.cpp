@@ -77,6 +77,36 @@ void moveTest()
 }
 
 
+
+void gripExample()
+{
+  bridge.tx("regbot mclear\n");
+  event.clearEvents();
+
+bridge.tx("regbot madd servo=2, pservo=100: time=2 \n");
+bridge.tx("regbot madd servo=1, pservo=-350, vservo=100: time=2 \n");
+bridge.tx("regbot madd vel=-0.3: dist=-1 \n");
+bridge.tx("regbot madd vel=0: time=0.5 \n");
+bridge.tx("regbot madd vel=0.3: dist=1 \n");
+bridge.tx("regbot madd vel=0: time=0.5\n");
+bridge.tx("regbot madd servo=1, pservo=-550,vservo=100:time=5 \n");
+bridge.tx("regbot madd servo=2,pservo=-600:time=2 \n");
+bridge.tx("regbot madd servo=1,pservo=-350,vservo=100:time=5 \n");
+bridge.tx("regbot madd vel=0.3:dist=1 \n");
+bridge.tx("regbot madd vel=0:time=0.5 \n");
+bridge.tx("regbot madd servo=1,pservo=-550,vservo=100:time=5 \n");
+bridge.tx("regbot madd servo=2,pservo=100:time=2 \n");
+bridge.tx("regbot madd servo=1,pservo=-350,vservo=100:time=5 \n");
+bridge.tx("regbot madd vel=-0.3:dist=-2 \n");
+bridge.tx("regbot madd vel=0: time=0.5 \n");
+
+  // start this mission
+  bridge.tx("regbot start\n");
+  cout << "user:# Waiting for " + string(__func__) + " to finish" << endl;
+  event.waitForEvent(0);
+  cout << "user:# obstacle " + string(__func__) + " has finished" << endl;
+}
+
 void testMethod()
 {
   bridge.tx("regbot mclear\n");
@@ -347,10 +377,10 @@ int main(int argc, char **argv)
   setup(argc, argv);
 
   // testMethod();
-
+  gripExample();
   // guillotine();
   // ramp();
-  restartRamp();
+  //restartRamp();
   // seesaw();
 
   // tunnel();

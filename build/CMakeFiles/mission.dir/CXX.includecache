@@ -26,6 +26,24 @@ src/uplay.h
 src/uevent.h
 /home/local/mission/src/uevent.h
 
+/home/local/mission/src/ubridge.cpp
+string
+-
+string.h
+-
+ubridge.h
+/home/local/mission/src/ubridge.h
+upose.h
+/home/local/mission/src/upose.h
+ucomment.h
+/home/local/mission/src/ucomment.h
+ustate.h
+/home/local/mission/src/ustate.h
+uvision.h
+/home/local/mission/src/uvision.h
+uevent.h
+/home/local/mission/src/uevent.h
+
 /home/local/mission/src/ubridge.h
 iostream
 -
