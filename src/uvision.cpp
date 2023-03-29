@@ -319,7 +319,7 @@ bool UVision::getBalls(){
         int val = round(mean[2]);
         cout << "CIRCLE FOUND: " << center << " radio: " << c[2] << " hue: " << hue << " sat: " << sat << " val: " << val <<"\n";
 
-        if (hue< 40 and val>180){
+        if (hue< 25 and sat>150 and val>180){
         //if (hue< 30){
           cout << "BALL FOUND: " << center;
           cout << " radio: " << c[2] << " hue: " << hue << "\n";
@@ -655,7 +655,7 @@ bool UVision::golf_mission(){
   while(n<2 and t.getTimePassed() < 50){
   //while(n<6){
     bool res = false;
-    //res = loopFrames(20, "BALL");
+    res = loopFrames(20, "BALL");
     if (res == true){
       std::cout << "# BALL FOUND "<< n <<" Pos: " << objPossition << "\n";
       ballTrack(objPossition);
@@ -664,7 +664,7 @@ bool UVision::golf_mission(){
       n +=1;
     }
     //res = 
-    res = loopFrames(60, "HOLE");
+    res = loopFrames(20, "HOLE");
     if (res == true){
       std::cout << "# HOLE FOUND "<< n <<" Pos: " << objPossition << "\n";
       ballTrack(objPossition);
@@ -694,7 +694,7 @@ bool UVision::doFindAruco(float seconds)
   }
 
   t.now();
-  Ptr<aruco::Dictionary> dictionary = cv::makePtr<aruco::Dictionary>(aruco::getPredefinedDictionary(cv::aruco::DICT_5X5_100));
+  Ptr<aruco::Dictionary> dictionary = cv::makePtr<aruco::Dictionary>(aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_100));
 
 
 
