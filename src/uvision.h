@@ -92,8 +92,8 @@ public:
   const float holeDiameter = 0.1; // meter
   /**
    * camera position in robot coordinates (x (forward), y (left), z (up)) */
-  const float camPos[3] = {0.225,0.0, 0.20};       // in meters
-  const float camTilt = 45 * M_PI / 180; // in radians
+  const float camPos[3] = {0.190,0.0, 0.175};       // in meters
+  const float camTilt = 31 * M_PI / 180; // in radians
   cv::Mat1f camToRobot;
 //   const float st = sin(camTilt);
 //   const float ct = cos(camTilt);

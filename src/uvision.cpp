@@ -319,7 +319,7 @@ bool UVision::getBalls(){
         int val = round(mean[2]);
         cout << "CIRCLE FOUND: " << center << " radio: " << c[2] << " hue: " << hue << " sat: " << sat << " val: " << val <<"\n";
 
-        if (hue< 25 and sat>150 and val>180){
+        if (hue< 30 and val>180){
         //if (hue< 30){
           cout << "BALL FOUND: " << center;
           cout << " radio: " << c[2] << " hue: " << hue << "\n";
@@ -589,7 +589,7 @@ bool UVision::loopFrames(float seconds, string obj)
 }
 
 void UVision::ballTrack(cv::Mat1f ballPos){
-  float arm_dist = 0.20;
+  float arm_dist = 0.385;
   const int MSL = 200;
   char s[MSL];
   double radians = atan(ballPos.at<float>(0, 1) / ballPos.at<float>(0, 0));
@@ -614,7 +614,7 @@ void UVision::ballTrack(cv::Mat1f ballPos){
   bridge.tx(s);
   std::cout << s << std::endl;
 
-  bridge.tx("regbot madd vel=0.0, log=3.0: time=0.02\n");
+  bridge.tx("regbot madd vel=0.0: time=0.08\n");
 
   snprintf(s,MSL,"regbot madd vel=0.2:dist=%.2f\n", dist);
   std::cout << s << std::endl;
@@ -635,7 +635,9 @@ void UVision::takeBall(){
   event.clearEvents();
   //usleep(2000);
  
+  bridge.tx("regbot madd servo=2,pservo=100:time=2\n");
   bridge.tx("regbot madd servo=1,pservo=-600,vservo=120:time=8\n");
+  bridge.tx("regbot madd servo=2,pservo=-600:time=2\n");
   bridge.tx("regbot madd servo=1,pservo=200,vservo=120:time=8\n");
 
   bridge.tx("regbot start\n");
@@ -663,8 +665,8 @@ bool UVision::golf_mission(){
       takeBall();
       n +=1;
     }
-    //res = 
-    res = loopFrames(20, "HOLE");
+    res = false;
+    //res = loopFrames(20, "HOLE");
     if (res == true){
       std::cout << "# HOLE FOUND "<< n <<" Pos: " << objPossition << "\n";
       ballTrack(objPossition);
