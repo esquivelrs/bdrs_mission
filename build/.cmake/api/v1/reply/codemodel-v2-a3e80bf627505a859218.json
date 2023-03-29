@@ -7,7 +7,6 @@
 				{
 					"build" : ".",
 					"hasInstallRule" : true,
-					"jsonFile" : "directory-.-0b208cef0ff47b757c34.json",
 					"minimumCMakeVersion" : 
 					{
 						"string" : "3.0"
@@ -40,7 +39,7 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "mission::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-mission-04a7fd8e0c6e790c126b.json",
+					"jsonFile" : "target-mission-7b71ca217d429f8d87bf.json",
 					"name" : "mission",
 					"projectIndex" : 0
 				}
@@ -50,12 +49,12 @@
 	"kind" : "codemodel",
 	"paths" : 
 	{
-		"build" : "/home/resquivel/Documents/BDRS/build",
-		"source" : "/home/resquivel/Documents/BDRS"
+		"build" : "/home/local/mission/build",
+		"source" : "/home/local/mission"
 	},
 	"version" : 
 	{
 		"major" : 2,
-		"minor" : 3
+		"minor" : 1
 	}
 }

@@ -498,7 +498,7 @@ bool UVision::loopFrames(float seconds, string obj, string mode)
 
 
   //while (t.getTimePassed() < seconds and camIsOpen and not terminate and n<5) {
-  while (t.getTimePassed() < seconds and camIsOpen and not terminate and numSamples < 15) {
+  while (t.getTimePassed() < seconds and camIsOpen and not terminate and numSamples < 20) {
     //cap >> image;
 
     getNewestFrame(); 
@@ -619,7 +619,7 @@ bool UVision::loopFrames(float seconds, string obj, string mode)
 }
 
 void UVision::ballTrack(cv::Mat1f ballPos){
-  float arm_dist = 0.385;
+  float arm_dist = 0.38;
   const int MSL = 200;
   char s[MSL];
   double radians = atan(ballPos.at<float>(0, 1) / ballPos.at<float>(0, 0));
@@ -676,6 +676,24 @@ void UVision::takeBall(){
 
 }
 
+void UVision::releaseBall(){
+  //servo=1,pservo=-600, vservo=120:time=8
+
+  bridge.tx("regbot mclear\n");
+  // clear events received from last mission
+  event.clearEvents();
+  //usleep(2000);
+ 
+  bridge.tx("regbot madd servo=1,pservo=-600,vservo=120:time=8\n");
+  bridge.tx("regbot madd servo=2,pservo=100:time=2\n");
+  bridge.tx("regbot madd servo=1,pservo=200,vservo=120:time=8\n");
+
+  bridge.tx("regbot start\n");
+  cout << "Taking a ball...\n";
+  event.waitForEvent(0); 
+
+}
+
 void UVision::move_arround(){
 
   const int MSL = 200;
@@ -714,7 +732,7 @@ bool UVision::golf_mission(){
   UTime t;
   t.now();
 
-  while(n<2 and t.getTimePassed() < 50){
+  while(n<3 and t.getTimePassed() < 60){
   //while(n<6){
     bool res = false;
     res = loopFrames(20, "BALL", "GROSS");
@@ -728,21 +746,22 @@ bool UVision::golf_mission(){
         std::cout << "# BALL FINE FOUND "<< n <<" Pos: " << objPossition << "\n";
         ballTrack(objPossition);
         takeBall();
-        n +=1;
+        
+        res = loopFrames(20, "HOLE", "GROSS");
+        if (res == true){
+          std::cout << "# HOLE FOUND "<< n <<" Pos: " << objPossition << "\n";
+          ballTrack(objPossition);
+          releaseBall();
+          n +=1;
+        }
       }
       
     }
     else {
       //MOVE ARROUND
+      move_arround();
 
 
-    }
-    res = false;
-    //res = loopFrames(20, "HOLE");
-    if (res == true){
-      std::cout << "# HOLE FOUND "<< n <<" Pos: " << objPossition << "\n";
-      ballTrack(objPossition);
-      n +=1;
     }
 
 

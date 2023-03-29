@@ -154,6 +154,7 @@ private:
   void ballTrack(cv::Mat1f ballPos);
   void move_arround();
   void takeBall();
+  void releaseBall();
   cv::Mat1f calc_pos3drob(cv::Vec3i obj, float diameter);
   bool findfHole();
 
