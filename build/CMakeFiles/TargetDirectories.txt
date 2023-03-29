@@ -1,0 +1,7 @@
+/home/resquivel/Documents/BDRS/build/CMakeFiles/mission.dir
+/home/resquivel/Documents/BDRS/build/CMakeFiles/edit_cache.dir
+/home/resquivel/Documents/BDRS/build/CMakeFiles/rebuild_cache.dir
+/home/resquivel/Documents/BDRS/build/CMakeFiles/list_install_components.dir
+/home/resquivel/Documents/BDRS/build/CMakeFiles/install.dir
+/home/resquivel/Documents/BDRS/build/CMakeFiles/install/local.dir
+/home/resquivel/Documents/BDRS/build/CMakeFiles/install/strip.dir

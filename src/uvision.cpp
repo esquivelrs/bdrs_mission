@@ -283,11 +283,41 @@ cv::Mat1f UVision::calc_pos3drob(cv::Vec3i obj, float diameter){
 
 
 
-bool UVision::getBalls(){
+bool UVision::getBalls(string mode="GROSS"){
   bool ball= false;
   Vec3i f_circle(0,0,0);
-  Mat frame_HSV, frame_gray, frame_threshold, frame_ed;
-  cv::cvtColor(frame_ud, frame_gray, COLOR_BGR2GRAY);
+  Mat frame_HSV, frame_gray, frame_threshold, frame_ed, frame_prep, mask;
+  int min_radio = 40;
+
+  if (mode == "FINE"){
+
+    cv::Rect rect(cx_for_ball-dx_for_ball/2, cy_for_ball-dy_for_ball/2, dx_for_ball, dy_for_ball);
+
+    // Step 2: Create a binary mask image
+    cv::Mat mask(frame_ud.rows, frame_ud.cols, CV_8UC1, cv::Scalar(0));
+
+    // Step 3: Set all pixels outside of the rectangle to 0 and all pixels inside the rectangle to 1
+    cv::rectangle(mask, rect, cv::Scalar(255), -1); // -1 means fill the rectangle
+
+    // Step 4: Apply the mask to the input image
+    frame_ud.copyTo(frame_prep, mask);
+    min_radio = 70;
+  }
+  else{
+    cv::cvtColor(frame_ud, frame_HSV, COLOR_BGR2HSV);
+    cv::blur(frame_HSV, frame_HSV, cv::Size(7, 7));
+    cv::inRange(frame_HSV, Scalar(2, 50, 50), Scalar(30, 255, 255),frame_threshold);
+    cv::erode(frame_threshold, frame_ed, cv::Mat(), cv::Point(-1,-1), 2);
+    cv::dilate(frame_ed, frame_ed, cv::Mat(), cv::Point(-1,-1), 30);
+    frame_ud.copyTo(frame_prep, frame_ed);
+  }
+  if (showImage)
+  {
+    imshow("THR", frame_prep);
+  }
+
+
+  cv::cvtColor(frame_prep, frame_gray, COLOR_BGR2GRAY);
   cv::GaussianBlur(frame_gray, frame_gray, Size(7, 7), 0);
 
   vector<Vec3f> circles;
@@ -298,7 +328,7 @@ bool UVision::getBalls(){
   // );
   cv::HoughCircles(frame_gray, circles, HOUGH_GRADIENT, 1,
               frame_gray.rows/4,  // change this value to detect circles with different distances to each other
-              100, 10, 40, 100 // change the last two parameters
+              100, 10, min_radio, 90 // change the last two parameters
           // (min_radius & max_radius) to detect larger circles
   );
   for( size_t i = 0; i < circles.size(); i++ )
@@ -311,7 +341,7 @@ bool UVision::getBalls(){
       if (0<(c[0]-c[2]/4) && (c[0]+c[2]/4)<frame.cols && 0<(c[1]-c[2]/4) && (c[1]+c[2]/4)<frame.rows){
         
         cv::cvtColor(frame_ud, frame_HSV, COLOR_BGR2HSV);
-        cv::Mat roi = frame_HSV(cv::Range(c[1]-c[2]/4, c[1]+c[2]/4), cv::Range(c[0]-c[2]/4, c[0]+c[2]/4));
+        cv::Mat roi = frame_HSV(cv::Range(c[1]-c[2]/8, c[1]+c[2]/8), cv::Range(c[0]-c[2]/8, c[0]+c[2]/8));
         cv::Mat1b mask(roi.rows, roi.cols);
         cv::Scalar mean = cv::mean(roi, mask);
         int hue = round(mean[0]);
@@ -446,7 +476,7 @@ bool UVision::findfHole(){
 
 
 
-bool UVision::loopFrames(float seconds, string obj)
+bool UVision::loopFrames(float seconds, string obj, string mode)
 {
   cout << "# LOOP FRAMES FOR" << obj << "\n";
   float distanceThreshold = 5.0;
@@ -468,7 +498,7 @@ bool UVision::loopFrames(float seconds, string obj)
 
 
   //while (t.getTimePassed() < seconds and camIsOpen and not terminate and n<5) {
-  while (t.getTimePassed() < seconds and camIsOpen and not terminate and numSamples < 40) {
+  while (t.getTimePassed() < seconds and camIsOpen and not terminate and numSamples < 15) {
     //cap >> image;
 
     getNewestFrame(); 
@@ -476,7 +506,7 @@ bool UVision::loopFrames(float seconds, string obj)
     bool found = false;
     if (gotFrame){
       if (obj == "BALL"){
-        found = getBalls();
+        found = getBalls(mode);
         if (found==true){
 
           float max_radius = std::numeric_limits<float>::min();
@@ -525,7 +555,7 @@ bool UVision::loopFrames(float seconds, string obj)
       if (showImage)
       {
         imshow("IMG_FRAMES", frame_ud);
-        imshow("RAW", frame);
+        //imshow("RAW", frame);
 
       }
       
@@ -657,13 +687,20 @@ bool UVision::golf_mission(){
   while(n<2 and t.getTimePassed() < 50){
   //while(n<6){
     bool res = false;
-    res = loopFrames(20, "BALL");
+    res = loopFrames(20, "BALL", "GROSS");
     if (res == true){
       std::cout << "# BALL FOUND "<< n <<" Pos: " << objPossition << "\n";
       ballTrack(objPossition);
       //usleep(2000);
-      takeBall();
-      n +=1;
+      
+      res = loopFrames(5, "BALL", "FINE");
+      if (res == true){
+        std::cout << "# BALL FINE FOUND "<< n <<" Pos: " << objPossition << "\n";
+        ballTrack(objPossition);
+        takeBall();
+        n +=1;
+      }
+      
     }
     res = false;
     //res = loopFrames(20, "HOLE");

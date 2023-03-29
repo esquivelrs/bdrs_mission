@@ -149,8 +149,8 @@ private:
   cv::Mat1f holePos;
 
   cv::Mat1f objPossition;
-  bool getBalls();
-  bool loopFrames(float seconds, string obj);
+  bool getBalls(string mode);
+  bool loopFrames(float seconds, string obj, string mode);
   void ballTrack(cv::Mat1f ballPos);
   void takeBall();
   cv::Mat1f calc_pos3drob(cv::Vec3i obj, float diameter);
@@ -159,6 +159,13 @@ private:
 
   int server_fd, new_socket;
   struct sockaddr_in address;
+
+
+  int cx_for_ball = 648;
+  int cy_for_ball = 454;
+  int dx_for_ball = 400;
+  int dy_for_ball = 400;
+
   
 
   
