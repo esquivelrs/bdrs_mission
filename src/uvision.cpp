@@ -676,6 +676,36 @@ void UVision::takeBall(){
 
 }
 
+void UVision::move_arround(){
+
+  const int MSL = 200;
+  char s[MSL];
+
+  bridge.tx("regbot mclear\n");
+  // clear events received from last mission
+  event.clearEvents();
+  //usleep(2000);
+
+  bridge.tx("regbot madd vel=0.0, log=3.0: time=0.02\n");
+
+  snprintf(s,MSL,"regbot madd vel=%.2f,tr=0.2:turn=%.1f\n", 0.2, 45.0);
+  bridge.tx(s);
+  std::cout << s << std::endl;
+
+  bridge.tx("regbot madd vel=0.0: time=0.08\n");
+
+  // snprintf(s,MSL,"regbot madd vel=0.2:dist=%.2f\n", 0.5);
+  // std::cout << s << std::endl;
+  // bridge.tx(s);
+
+  bridge.tx("regbot madd vel=0.0: time=0.01\n");
+
+  bridge.tx("regbot start\n");
+  cout << "Taking a ball...\n";
+  event.waitForEvent(0);  
+
+}
+
 
 
 
@@ -701,6 +731,11 @@ bool UVision::golf_mission(){
         n +=1;
       }
       
+    }
+    else {
+      //MOVE ARROUND
+
+
     }
     res = false;
     //res = loopFrames(20, "HOLE");

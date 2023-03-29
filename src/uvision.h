@@ -152,6 +152,7 @@ private:
   bool getBalls(string mode);
   bool loopFrames(float seconds, string obj, string mode);
   void ballTrack(cv::Mat1f ballPos);
+  void move_arround();
   void takeBall();
   cv::Mat1f calc_pos3drob(cv::Vec3i obj, float diameter);
   bool findfHole();
