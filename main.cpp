@@ -103,20 +103,19 @@ void testMethod()
 
   // move forward for 3s
   // bridge.tx("regbot madd vel=0.2: time=3.0\n");
+  
+  // reverse and return to line
+  bridge.tx("regbot madd vel=-0.3: lv=20, dist=1.0\n");
+  bridge.tx("regbot madd vel=-0.3, tr=0.8: turn=110\n");
+  bridge.tx("regbot madd vel=0.0: time=0.8\n");
 
-  // turn right after finishing
-  bridge.tx("regbot madd vel=0.3, tr=0.1: turn=-100 \n");
-  bridge.tx("regbot madd vel=0.0: time=0.5 \n");
-  bridge.tx("regbot madd vel=0.3: dist=2.0, lv=20\n");
-
-  // return to home
-  bridge.tx("regbot madd vel=0.3, tr=0.1: turn=85 \n");
-  bridge.tx("regbot madd vel=0.0: time=0.5 \n");
-  bridge.tx("regbot madd vel=0.3, edger=0.0, white=1: dist=0.5, lv<4\n");
-  bridge.tx("regbot madd vel=0.3, edger=0.0, white=1: xl>15, lv<4\n");
-
-  bridge.tx("regbot madd vel=0.0: time=0.5\n");
-
+  // bridge.tx("regbot madd vel=0.3, tr=0.1: turn=85\n");
+  // bridge.tx("regbot madd vel=0.3: time=1.0\n");
+  // bridge.tx("regbot madd vel=0.1: dist=0.1\n");
+  // bridge.tx("regbot madd vel=0.2, edger=0, white=1: dist=0.2, lv<4\n");
+  // bridge.tx("regbot madd vel=0.2, edger=0, white=1: xl>15, lv<4\n");
+  // bridge.tx("regbot madd vel=0.0: time=0.5\n");
+  
 
   // start this mission
   bridge.tx("regbot start\n");
@@ -127,12 +126,15 @@ void testMethod()
 
 void uTurn()
 {
-  // robot should return to the left edge of the same position after uTurn
+  // Utility moving sequence
+  // Robot moves forward slightly, then executes a U-turn,
+  // and returns to the right edge of the original position
+
   bridge.tx("regbot mclear\n");
   event.clearEvents();
 
   // find and follow line
-  bridge.tx("regbot madd vel=0.2: dist=0.05\n");
+  bridge.tx("regbot madd vel=0.2: dist=0.2\n");
   bridge.tx("regbot madd vel=0.2: lv=20, dist=0.5\n");
   bridge.tx("regbot madd vel=0.2, edgel=0, white=1: lv<4, dist=0.05\n");
 
@@ -141,11 +143,11 @@ void uTurn()
   bridge.tx("regbot madd vel=0.0: time=0.5\n");
   bridge.tx("regbot madd vel=0.3,tr=0.01: turn=45\n");
   bridge.tx("regbot madd vel=0.0: time=0.5\n");
-  bridge.tx("regbot madd vel=0.3,tr=0.03: turn=180\n");
-  bridge.tx("regbot madd vel=0.0: time=0.5\n");
+  bridge.tx("regbot madd vel=0.3,tr=0.03: turn=175\n"); // robot is overturning
+  bridge.tx("regbot madd vel=0.0: time=1.0\n");
 
   // follow line
-  bridge.tx("regbot madd vel=0.2, edger=0, white=1: lv<4, dist=0.1\n");
+  bridge.tx("regbot madd vel=0.2, edger=0, white=1: lv<4, dist=0.2\n");
   bridge.tx("regbot madd vel=0.0: time=0.5\n");
   
   // start this mission
@@ -156,15 +158,18 @@ void uTurn()
   cout <<  "user:# obstacle " + string(__func__) + " has finished\n" << endl;
 }
 
-void offsetFromHome()
+void reverseFromHome()
 {
-  // robot should return to the left edge of the same position after uTurn
+  // Utility moving sequence
+  // Moves the robot backwards, to allow subsequent sequences
+  // locate the cross line at the home intersection
+  
   bridge.tx("regbot mclear\n");
   event.clearEvents();
 
   // reverse slightly
   bridge.tx("regbot madd vel=-0.2: dist=0.2 \n");
-  bridge.tx("regbot madd vel=0.0: time=0.5 \n");
+  bridge.tx("regbot madd vel=0.0: time=0.2 \n");
   
   // start this mission
   bridge.tx("regbot start\n");
@@ -198,10 +203,10 @@ void ramp()
   event.clearEvents();
 
   bridge.tx("regbot madd vel=0.6: dist=0.5, lv=20\n");
-  bridge.tx("regbot madd vel=0.6, edger=0.0, white=1: dist=11.0, lv<3\n");
+  bridge.tx("regbot madd vel=0.6, edger=0.0, white=1: dist=11.0, lv<4\n");
   bridge.tx("regbot madd vel=0.0: time=0\n");
   // complete the downRamp
-  bridge.tx("regbot madd vel=0.6, edger=0.0, white=1: dist=1.2, lv<3\n");
+  bridge.tx("regbot madd vel=0.6, edger=0.0, white=1: dist=1.2, lv<4\n");
 
   // leave line, find line
   bridge.tx("regbot madd vel=0.2: dist=0.45\n");
@@ -315,7 +320,7 @@ void tunnel()
   event.clearEvents();
   
   // follow white line, past cross line
-  bridge.tx("regbot madd vel=0.4: dist=0.1\n");
+  bridge.tx("regbot madd vel=0.4: dist=0.05\n");
   bridge.tx("regbot madd vel=0.4: lv=20, dist=0.8\n");
   bridge.tx("regbot madd vel=0.4, edger=0, white=1: dist=0.8, lv<4\n");
 
@@ -323,21 +328,21 @@ void tunnel()
   bridge.tx("regbot madd vel=0.4, edger=0, white=1: dist=1.5, lv<4, xl>15\n");
   
   // turn left towards tunnel
-  bridge.tx("regbot madd vel=0.4, tr=0.3: turn=85\n");
-  bridge.tx("regbot madd vel=0.4: ir2<0.14\n");
-  bridge.tx("regbot madd vel=0.3, tr=0.15:turn=-85\n");
+  bridge.tx("regbot madd vel=0.2, tr=0.3: turn=80\n");
+  bridge.tx("regbot madd vel=0.3: ir2<0.12\n");
+  bridge.tx("regbot madd vel=0.2, tr=0.13:turn=-78\n");
 
   // go to front door and push open
-  bridge.tx("regbot madd vel=0.3: ir2<0.1\n");
-  bridge.tx("regbot madd vel=0.0: time=0.5\n");
-  bridge.tx("regbot madd vel=0.6: dist=0.1\n");
-  bridge.tx("regbot madd vel=0.3: dist=0.05\n");
+  bridge.tx("regbot madd vel=0.2: ir2<0.1\n");
+  bridge.tx("regbot madd vel=0.0: time=1.5\n");
+  bridge.tx("regbot madd vel=0.6: dist=0.18\n");    // knock front door
+  // bridge.tx("regbot madd vel=0.3: dist=0.05\n");
 
   // turn left twice into tunnel
-  bridge.tx("regbot madd vel=0.3, tr=0.33: turn=90\n");
-  bridge.tx("regbot madd vel=0.0: time=0.8\n");
-  bridge.tx("regbot madd vel=0.3: dist=0.05\n");
-  bridge.tx("regbot madd vel=0.0: time=0.8\n");
+  bridge.tx("regbot madd vel=0.3, tr=0.35: turn=90\n");
+  bridge.tx("regbot madd vel=0.0: time=1.5\n");
+  bridge.tx("regbot madd vel=0.1: dist=0.05\n");
+  bridge.tx("regbot madd vel=0.0: time=1.5\n");
   bridge.tx("regbot madd vel=0.3, tr=0.1: turn=90\n");
   bridge.tx("regbot madd vel=0.0: time=2.0\n");
 
@@ -346,46 +351,58 @@ void tunnel()
   bridge.tx("regbot madd vel=0.4: dist=0.25\n");
 
   // 1st turn right and go straight
-  bridge.tx("regbot madd vel=0.4, tr=0.35: turn=-90\n");
+  bridge.tx("regbot madd vel=0.4, tr=0.34: turn=-90\n");
   bridge.tx("regbot madd vel=0.0: time=0.8\n");
   bridge.tx("regbot madd vel=0.4: dist=0.1\n");
 
-  // 2nd turn right and go straight
-  bridge.tx("regbot madd vel=0.4, tr=0.3: turn=-90\n");
+  // 2nd turn right and go straight (along left side)
+  bridge.tx("regbot madd vel=0.4, tr=0.28: turn=-90\n");
   bridge.tx("regbot madd vel=0.0: time=0.8\n");
-  bridge.tx("regbot madd vel=0.4: dist=0.75\n");
+  bridge.tx("regbot madd vel=0.4: dist=0.72\n");
 
   // 3rd turn right and go straight, close front door
   bridge.tx("regbot madd vel=0.4, tr=0.3: turn=-90\n");
   bridge.tx("regbot madd vel=0.0: time=0.8\n");
   bridge.tx("regbot madd vel=0.4: dist=0.85\n");
 
-  // 4th turn right and go straight
+  // 4th turn right and go straight (along right side)
   bridge.tx("regbot madd vel=0.4, tr=0.3: turn=-90\n");
   bridge.tx("regbot madd vel=0.0: time=0.8\n");
-  bridge.tx("regbot madd vel=0.: dist=0.65\n");
+  bridge.tx("regbot madd vel=0.43: dist=0.65\n");    // knocks back door
 
   // 5th turn right and go straight, close back door
   bridge.tx("regbot madd vel=0.4, tr=0.3: turn=-80\n");
   bridge.tx("regbot madd vel=0.0: time=0.8\n");
-  bridge.tx("regbot madd vel=0.4: dist=0.6\n");
+  bridge.tx("regbot madd vel=0.3: dist=0.6\n");
   bridge.tx("regbot madd vel=0.0: time=0.8\n");
-
-  // reverse and return to line
-  bridge.tx("regbot madd vel=-0.5: lv=20, dist=2.5\n");
-  bridge.tx("regbot madd vel=0.0: time=0.8\n");
-
-  // turn and return to home
-  // bridge.tx("regbot madd vel=-0.2: dist=0.1\n");
-  bridge.tx("regbot madd vel=0.3, tr=0.05: turn=85\n");
-  bridge.tx("regbot madd vel=-0.2, edger=0, white=1: xl>15, lv<4\n");
-  bridge.tx("regbot madd vel=0.0: time=0.5\n");
   
   // start this mission
   bridge.tx("regbot start\n");
   cout << "user:# Waiting for" + string(__func__) + "to finish\n" << endl;
   event.waitForEvent(0);
   cout <<  "user:# obstacle " + string(__func__) + " has finished\n" << endl;
+}
+
+void tunnelToHome()
+{
+  bridge.tx("regbot mclear\n");
+  event.clearEvents();
+  
+  // reverse and return to line
+  bridge.tx("regbot madd vel=-0.4: lv=20, dist=0.5\n");
+  bridge.tx("regbot madd vel=-0.4, tr=0.5: turn=145\n");
+  bridge.tx("regbot madd vel=0.0: time=0.8\n");
+  bridge.tx("regbot madd vel=0.3: lv=20, dist=2.0\n");
+
+  bridge.tx("regbot madd vel=0.2, edger=0, white=1: dist=0.2, lv<4\n");
+  bridge.tx("regbot madd vel=0.3, edger=0, white=1: xl>15, lv<4\n");
+  bridge.tx("regbot madd vel=0.0: time=0.5\n");  
+
+  // start this mission
+  bridge.tx("regbot start\n");
+  cout << "user:# Waiting for " + string(__func__) + " to finish" << endl;
+  event.waitForEvent(0);
+  cout << "user:# obstacle " + string(__func__) + " has finished" << endl;
 }
 
 void axe()
@@ -395,14 +412,15 @@ void axe()
   
   // find cross line and turn
   bridge.tx("regbot madd vel=0.2: dist=0.05\n");
-  bridge.tx("regbot madd vel=0.2: lv=20, dist=0.8\n");
-  bridge.tx("regbot madd vel=0.3, edger=0.0, white=1: dist=1.0, xl>16  \n");
+  // bridge.tx("regbot madd vel=0.2: lv=20, dist=0.8\n");
+  // bridge.tx("regbot madd vel=0.3, edger=0.0, white=1: dist=1.0, xl>16  \n");
   bridge.tx("regbot madd vel=0.3, tr=0.05: turn=-90 \n");
+  bridge.tx("regbot madd vel=0.0: time=0.5\n");
 
   // travel towards axe
-  bridge.tx("regbot madd vel=0.2, edger=0.0, white=1: dist=0.2 \n");
-  bridge.tx("regbot madd vel=0.2: dist=0.6 \n");
-  bridge.tx("regbot madd vel=0.2, edger=0.0, white=1: dist=0.38  \n");
+  bridge.tx("regbot madd vel=0.2, edger=0.0, white=1: dist=0.2, lv<4\n");
+  bridge.tx("regbot madd vel=0.2: dist=0.6\n");
+  bridge.tx("regbot madd vel=0.2, edger=0.0, white=1: dist=0.38, lv<4\n");
 
   // wait for opening
   bridge.tx("regbot madd vel=0.0: time=0.25  \n");
@@ -411,8 +429,8 @@ void axe()
   bridge.tx("regbot madd :ir2>0.4 \n");
 
   // speed through opening
-  bridge.tx("regbot madd vel=0.2, edger=0.0, white=1: dist=0.1  \n");
-  bridge.tx("regbot madd vel=0.8, edger=0.0, white=1: dist=0.7 \n");
+  bridge.tx("regbot madd vel=0.2, edger=0.0, white=1: dist=0.1, lv<4  \n");
+  bridge.tx("regbot madd vel=0.8: dist=0.7 \n");
   
   // start this mission
   bridge.tx("regbot start\n");
@@ -435,19 +453,8 @@ void fastTrack()
   // start zooming down track
   bridge.tx("regbot madd vel=0.4: dist=0.5, lv=20\n");
   bridge.tx("regbot madd vel=0.4, edger=0.0, white=1:dist=0.4, lv<4\n");
-  bridge.tx("regbot madd vel=1.1, edger=0.0, white=1:dist=12, lv<4\n");
+  bridge.tx("regbot madd vel=1.2, edger=0.0, white=1:dist=12, lv<4\n");
   bridge.tx("regbot madd vel=0.0: time=0.5\n");
-
-  // turn right after finishing
-  bridge.tx("regbot madd vel=0.3, tr=0.1: turn=-100 \n");
-  bridge.tx("regbot madd vel=0.0: time=0.5 \n");
-  bridge.tx("regbot madd vel=0.3: dist=2.0, lv=20\n");
-
-  // return to home
-  bridge.tx("regbot madd vel=0.3, tr=0.1: turn=85 \n");
-  bridge.tx("regbot madd vel=0.0: time=0.5 \n");
-  bridge.tx("regbot madd vel=0.3, edger=0.0, white=1: dist=0.5, lv<4\n");
-  bridge.tx("regbot madd vel=0.3, edger=0.0, white=1: xl>15, lv<4\n");
 
   bridge.tx("regbot madd vel=0.0: time=0.5\n");
 
@@ -456,6 +463,74 @@ void fastTrack()
   cout << "Waiting for " + string(__func__) + "to finish" << endl;
   event.waitForEvent(0);
   cout << "user:# obstacle " + string(__func__) + " has finished" << endl;
+}
+
+void fastTrackToHome()
+{
+  bridge.tx("regbot mclear\n");
+  event.clearEvents();
+  
+  // turn right after finishing
+  bridge.tx("regbot madd vel=0.3, tr=0.1: turn=-100 \n");
+  bridge.tx("regbot madd vel=0.0: time=0.5 \n");
+  bridge.tx("regbot madd vel=0.3: dist=2.0, lv=20\n");
+
+  // return to home
+  bridge.tx("regbot madd vel=0.3, tr=0.1: turn=85 \n");
+  bridge.tx("regbot madd vel=0.0: time=0.5 \n");
+  bridge.tx("regbot madd vel=0.3: dist=0.5, lv=20\n");
+  bridge.tx("regbot madd vel=0.4, edger=0.0, white=1: dist=0.5, lv<4\n");
+  bridge.tx("regbot madd vel=0.4, edger=0.0, white=1: xl>15, lv<4\n");
+
+  // start this mission
+  bridge.tx("regbot start\n");
+  cout << "user:# Waiting for " + string(__func__) + " to finish" << endl;
+  event.waitForEvent(0);
+  cout << "user:# obstacle " + string(__func__) + " has finished" << endl;
+}
+
+void roundaboutGate()
+{
+  bridge.tx("regbot mclear\n");
+  event.clearEvents();
+
+  bridge.tx("regbot madd vel=0.3, edger=0.0, white=1: dist=6.5 \n");
+  bridge.tx("regbot madd vel=0.2, tr=0: turn=-85 \n");
+  bridge.tx("regbot madd vel=0.2: dist=0.5 \n");
+  bridge.tx("regbot madd vel=0.2, tr=0: turn=-80 \n");
+  bridge.tx("regbot madd vel=0.3, tr=0.4: dist=2.30, turn=500 \n");
+  bridge.tx("regbot madd Vel=0.2, tr=0: turn=85 \n");
+  bridge.tx("regbot madd vel=0: time=0.1  \n");
+  bridge.tx("regbot madd : ir2<0.4  \n");
+  bridge.tx("regbot madd : ir2>0.4 \n");
+  bridge.tx("regbot madd vel=0.2: dist=0.5 \n");
+
+  // start this mission
+  bridge.tx("regbot start\n");
+  // wait until finished
+  cout << "user:# Waiting for " + string(__func__) + " to finish\n" << endl;
+  event.waitForEvent(0);
+  cout <<  "user:# obstacle " + string(__func__) + " has finished\n" << endl;
+
+}
+
+void goal()
+{
+  bridge.tx("regbot mclear\n");
+  event.clearEvents();
+
+  bridge.tx("regbot madd vel=0.3: dist=0.1\n");
+  bridge.tx("regbot madd vel=0.3: lv=20, dist=0.8\n");
+  bridge.tx("regbot madd vel=0.3, edgel=0, white=1: lv<4, ir2<0.2\n");
+  bridge.tx("regbot madd vel=0.0: time=0.5\n");
+  
+
+  // start this mission
+  bridge.tx("regbot start\n");
+  // wait until finished
+  cout << "user:# Waiting for " + string(__func__) + " to finish\n" << endl;
+  event.waitForEvent(0);
+  cout <<  "user:# obstacle " + string(__func__) + " has finished\n" << endl;
 }
 
 void guillotineRampSequence()
@@ -468,27 +543,34 @@ void seesawSequence()
 {
   seesaw();
   uTurn();
-  offsetFromHome();
+  // reverseFromHome();
 }
 
 void tunnelSequence()
 {
   uTurn();
   tunnel();
-  offsetFromHome();
+  tunnelToHome();
 }
 
 void axeFastTrackSequence()
 {
-  axe();
+  // axe();
   fastTrack();
-  offsetFromHome();
+  fastTrackToHome();
+}
+
+void goalSequence()
+{
+  uTurn();
+  goal();
 }
 
 int main(int argc, char **argv)
 {
   cout << "# Hello, Robobot user mission starting ..." << endl;
   setup(argc, argv);
+  cout << "After setup" << endl;
 
   // testMethod();
   // gripExample();
@@ -496,12 +578,12 @@ int main(int argc, char **argv)
   // guillotineRampSequence();  // works
   // restartRamp();             // works
   // seesawSequence();          // buggy after seesaw
-  // tunnelSequence();          // buggy
+  // tunnelSequence();          // works, but should rerun to finetune
   // axeFastTrackSequence();    // works
+  // goalSequence();            // works
 
   cout << "# Robobot user mission finished ..." << endl;
-  // remember to close camera
-  vision.stop();
+  vision.stop();      // remember to close camera
   sound.say("Mission complete", 0.2);
   while (sound.isSaying())
     sleep(1);
