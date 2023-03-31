@@ -190,11 +190,11 @@ private:
   cv::Mat1f robot2orig(float x, float y);
   cv::Mat1f orig2robot(float x, float y);
 
-  const cv::Scalar low_orange = cv::Scalar(0, 0, 250);
+  const cv::Scalar low_orange = cv::Scalar(0, 44, 205);
   const cv::Scalar up_orange = cv::Scalar(30, 255, 255);
 
-  const cv::Scalar low_blue = cv::Scalar(82,24,255);
-  const cv::Scalar up_blue = cv::Scalar(128, 255, 255);
+  const cv::Scalar low_blue = cv::Scalar(90,20,200);
+  const cv::Scalar up_blue = cv::Scalar(120, 255, 255);
 
   float distanceThreshold = 0.005;
   
