@@ -340,32 +340,36 @@ bool UVision::getBalls(string mode="GROSS"){
   std::cout << "Centroid: (" << centroids.at<double>(max_label, 0) << ", " << centroids.at<double>(max_label, 1) << ")" << std::endl;
   std::cout << "Area: " << max_area << std::endl;
 
-  if (max_area>10){
-    float diameter = 2*sqrt(max_area/M_PI);
-
+  if (max_area>100){
+    //float diameter = 2*sqrt(max_area/M_PI);
+    std::cout << "HERE: "<< std::endl;
     f_circle[0] = centroids.at<double>(max_label, 0);
     f_circle[1] = centroids.at<double>(max_label, 1);
     f_circle[2] = stats.at<int>(max_label, cv::CC_STAT_WIDTH)/2;
 
-    holePos = calc_pos3drob(f_circle, diameter);
+    std::cout << "HERE2: "<< std::endl;
+    ballPos = calc_pos3drob(f_circle, golfBallDiameter);
+    std::cout << "HERE3: "<< std::endl;
     ball = true;
     
   }
 
   if (showImage)
   {
-    imshow("HOLE", frame_ed);
+    imshow("BALL", frame_ed);
     // Draw bounding box around the component with the maximum area
     if (max_label != -1) {
-        cv::Rect bbox(stats.at<int>(max_label, cv::CC_STAT_LEFT),
-                      stats.at<int>(max_label, cv::CC_STAT_TOP),
-                      stats.at<int>(max_label, cv::CC_STAT_WIDTH),
-                      stats.at<int>(max_label, cv::CC_STAT_HEIGHT));
-        cv::rectangle(frame_ud, bbox, cv::Scalar(0, 0, 255), 2);
+        int radius = stats.at<int>(max_label, cv::CC_STAT_WIDTH)/2;
+        Point center = Point(centroids.at<double>(max_label, 0), centroids.at<double>(max_label, 1));
+        cv::circle( frame_ud, center, radius, Scalar(255,0,255), 3, LINE_AA);
+        std::string text = "BALL FOUND: (" + std::to_string(center.x) + ", " + std::to_string(center.y) + ")" + " radio: " + std::to_string(radius);
+        cv::putText(frame_ud, text, center, cv::FONT_HERSHEY_DUPLEX, 0.4, cv::Scalar(0,0,0), 2, false);
     }
 
-    imshow("HOLE_HSV", frame_HSV);
+    imshow("HSV", frame_HSV);
   }
+
+  std::cout << "HERE4: "<< std::endl;
 
   return ball;
 }
@@ -503,7 +507,6 @@ bool UVision::loopFrames(float seconds, string obj, string mode)
     if (gotFrame){
       if (obj == "BALL"){
         found = getBalls(mode);
-        found = findfHole();
         if (found==true){
           pos3drob = ballPos;
         }
@@ -831,7 +834,7 @@ bool UVision::golf_mission(){
   addBoundaryPoint(0.0, -3.0);
   addBoundaryPoint(5.0, -3.0);
 
-  while(n<3 and t.getTimePassed() < 40){
+  while(n<3 and t.getTimePassed() < 20){
   //while(n<6){
     bool res = false;
     res = loopFrames(20, "BALL", "GROSS");
@@ -841,7 +844,7 @@ bool UVision::golf_mission(){
       //usleep(2000);
       
       res = loopFrames(5, "BALL", "FINE");
-      //res = false;
+      res = false;
       if (res == true){
         std::cout << "# BALL FINE FOUND "<< n <<" Pos: " << objPossition << "\n";
         move(objPossition);
