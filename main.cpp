@@ -240,6 +240,9 @@ void restartRamp()
   bridge.tx("regbot madd vel=0.5, edger=0, white=1: lv<4, xl>15\n");
   bridge.tx("regbot madd vel=0.5: dist=0.2\n");
 
+  // turn right to avoid patrol robot
+  // TODO
+
   // detect 2nd cross line and go past it
   bridge.tx("regbot madd vel=0.5, edger=0, white=1: lv<4, xl>15\n");
   bridge.tx("regbot madd vel=0.5: dist=0.2\n");
@@ -262,8 +265,92 @@ void restartRamp()
   cout <<  "user:# obstacle " + string(__func__) + " has finished\n" << endl;
 }
 
-void seesaw()
+void homeToSeesawMid()
 {
+  bridge.tx("regbot mclear\n");
+  event.clearEvents();
+
+  // follow white line, find cross line
+  bridge.tx("regbot madd vel=0.3: dist=0.1\n");
+  bridge.tx("regbot madd vel=0.3: lv=20, dist=0.5\n");
+  bridge.tx("regbot madd vel=0.5, edgel=0, white=1: lv<4, xl>15\n");
+  bridge.tx("regbot madd vel=0.0: time=0.5\n");
+
+  // turn into seeseaw
+  bridge.tx("regbot madd servo=1, pservo=0, vservo=150: time=2\n");   //lower arm
+  bridge.tx("regbot madd vel=0.3,tr=0.05: turn=85\n");
+  bridge.tx("regbot madd vel=0.0: time=1.5\n");
+
+  // go to midpt of seesaw
+  bridge.tx("regbot madd vel=0.4: dist=0.2\n");
+  bridge.tx("regbot madd vel=0.4, edgel=0, white=1: dist=0.7, lv<4\n");
+  bridge.tx("regbot madd vel=0.0: time=0.5\n");
+
+  // start this mission
+  bridge.tx("regbot start\n");
+  cout << "user:# Waiting for " + string(__func__) + " to finish\n" << endl;
+  event.waitForEvent(0);
+  cout <<  "user:# obstacle " + string(__func__) + " has finished\n" << endl;
+}
+
+void seesawMidToLine()
+{
+  bridge.tx("regbot mclear\n");
+  event.clearEvents();
+
+  // slowdown near midpt of seesaw
+  bridge.tx("regbot madd vel=0.2, edgel=0, white=1: dist=0.6, lv<4\n");
+  bridge.tx("regbot madd vel=0.0: time=1.0\n");
+  bridge.tx("regbot madd vel=0.2, edgel=0, white=1: lv<4\n");
+  bridge.tx("regbot madd vel=0.0: time=1.0\n");
+
+  // go forward until line detected, turn left
+  bridge.tx("regbot madd vel=0.2: dist=0.8\n");
+  bridge.tx("regbot madd vel=0.2, tr=0.05: turn=80\n");
+  bridge.tx("regbot madd vel=0.0: time=0.5\n");
+  bridge.tx("regbot madd vel=0.2, edgel=0, white=1: lv<4, dist=0.2\n");
+
+  // start this mission
+  bridge.tx("regbot start\n");
+  cout << "user:# Waiting for " + string(__func__) + " to finish\n" << endl;
+  event.waitForEvent(0);
+  cout <<  "user:# obstacle " + string(__func__) + " has finished\n" << endl;
+}
+
+void avoidPatrolRobot()
+{
+
+}
+
+void holeToHome()
+{
+  
+}
+
+void fanningPattern()
+{
+  bridge.tx("regbot mclear\n");
+  event.clearEvents();
+
+  bridge.tx("regbot madd label=1, vel=0.1: dist=0.01\n");
+  bridge.tx("regbot madd vel=0.08, tr=0.05: turn=45\n");
+  bridge.tx("regbot madd vel=0.08, tr=0.05: turn=-90\n");
+  bridge.tx("regbot madd vel=0.08, tr=0.05: turn=45\n");
+  bridge.tx("regbot madd vel=0.0: time=1.5\n");
+  bridge.tx("regbot madd goto=1: count=2\n");
+  bridge.tx("regbot madd vel=-0.2: lv=20\n");  
+
+  // start this mission
+  bridge.tx("regbot start\n");
+  cout << "user:# Waiting for " + string(__func__) + " to finish\n" << endl;
+  event.waitForEvent(0);
+  cout <<  "user:# obstacle " + string(__func__) + " has finished\n" << endl;
+}
+
+void seesawNoBall()
+{
+  // travel down the seesaw without grabbing the ball
+
   bridge.tx("regbot mclear\n");
   event.clearEvents();
 
@@ -311,7 +398,6 @@ void seesaw()
   cout << "user:# Waiting for " + string(__func__) + " to finish\n" << endl;
   event.waitForEvent(0);
   cout <<  "user:# obstacle " + string(__func__) + " has finished\n" << endl;
-
 }
 
 void tunnel()
@@ -539,11 +625,22 @@ void guillotineRampSequence()
   ramp();
 }
 
+void seesawNoBallSequence()
+{
+  seesawNoBall();
+  uTurn();
+}
+
 void seesawSequence()
 {
-  seesaw();
-  uTurn();
-  // reverseFromHome();
+  homeToSeesawMid();
+  // TODO: grip ball sequence
+  // seesawMidToLine(); 
+  // TODO: avoid patrol robot
+  // fanningPattern();
+  // TODO: grab next ball;
+  // fanningPattern();
+  // TODO: holeToHome();
 }
 
 void tunnelSequence()
@@ -555,7 +652,7 @@ void tunnelSequence()
 
 void axeFastTrackSequence()
 {
-  // axe();
+  axe();
   fastTrack();
   fastTrackToHome();
 }
@@ -577,8 +674,8 @@ int main(int argc, char **argv)
 
   // guillotineRampSequence();  // works
   // restartRamp();             // works
-  // seesawSequence();          // buggy after seesaw
-  // tunnelSequence();          // works, but should rerun to finetune
+  // seesawSequence();          // work in progress
+  // tunnelSequence();          // works, but should rerun tunnel to finetune
   // axeFastTrackSequence();    // works
   // goalSequence();            // works
 
