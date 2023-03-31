@@ -306,9 +306,9 @@ bool UVision::getBalls(string mode="GROSS"){
   else{
     cv::cvtColor(frame_ud, frame_HSV, COLOR_BGR2HSV);
     cv::blur(frame_HSV, frame_HSV, cv::Size(7, 7));
-    cv::inRange(frame_HSV, Scalar(2, 50, 50), Scalar(30, 255, 255),frame_threshold);
-    cv::erode(frame_threshold, frame_ed, cv::Mat(), cv::Point(-1,-1), 2);
-    cv::dilate(frame_ed, frame_ed, cv::Mat(), cv::Point(-1,-1), 30);
+    cv::inRange(frame_HSV, low_orange, up_orange ,frame_threshold);
+    cv::erode(frame_threshold, frame_ed, cv::Mat(), cv::Point(-1,-1), 5);
+    cv::dilate(frame_ed, frame_ed, cv::Mat(), cv::Point(-1,-1), 40);
     frame_ud.copyTo(frame_prep, frame_ed);
   }
   if (showImage)
@@ -318,7 +318,7 @@ bool UVision::getBalls(string mode="GROSS"){
 
 
   cv::cvtColor(frame_prep, frame_gray, COLOR_BGR2GRAY);
-  cv::GaussianBlur(frame_gray, frame_gray, Size(7, 7), 0);
+  cv::GaussianBlur(frame_gray, frame_gray, Size(9, 9), 0);
 
   vector<Vec3f> circles;
   // cv::HoughCircles(frame_gray, circles, HOUGH_GRADIENT, 1,
@@ -328,7 +328,7 @@ bool UVision::getBalls(string mode="GROSS"){
   // );
   cv::HoughCircles(frame_gray, circles, HOUGH_GRADIENT, 1,
               frame_gray.rows/4,  // change this value to detect circles with different distances to each other
-              100, 10, min_radio, 90 // change the last two parameters
+              100, 25, min_radio, 100 // change the last two parameters
           // (min_radius & max_radius) to detect larger circles
   );
   for( size_t i = 0; i < circles.size(); i++ )
@@ -349,7 +349,7 @@ bool UVision::getBalls(string mode="GROSS"){
         int val = round(mean[2]);
         cout << "CIRCLE FOUND: " << center << " radio: " << c[2] << " hue: " << hue << " sat: " << sat << " val: " << val <<"\n";
 
-        if (hue< 30 and val>180){
+        if (hue< 30 and val>160){
         //if (hue< 30){
           cout << "BALL FOUND: " << center;
           cout << " radio: " << c[2] << " hue: " << hue << "\n";
@@ -384,7 +384,7 @@ bool UVision::findfHole(){
   // Lower values: 210.678 81.12039999999999 74.228
   // Upper values: 230.678 181.1204 174.228
   
-  cv::inRange(frame_HSV, Scalar(90,0,150), Scalar(116, 255, 255),frame_threshold);
+  cv::inRange(frame_HSV, low_blue, up_blue,frame_threshold);
   //cv::inRange(frame_YUV, Scalar(210,80,74), Scalar(230, 181, 174),frame_threshold);
   //cv::inRange(frame_YUV, Scalar(165,130,120), Scalar(200, 140, 135),frame_threshold);
 
@@ -479,7 +479,7 @@ bool UVision::findfHole(){
 bool UVision::loopFrames(float seconds, string obj, string mode)
 {
   cout << "# LOOP FRAMES FOR" << obj << "\n";
-  float distanceThreshold = 5.0;
+
   vector<cv::Mat1f> samples;
   cv::Mat1f accumulated = cv::Mat1f::zeros(1, 3);  // Accumulated sum
   int numSamples = 0;
@@ -559,25 +559,6 @@ bool UVision::loopFrames(float seconds, string obj, string mode)
 
       }
       
-      if (streaming){
-        int imgSize = frame_ud.total() * frame_ud.elemSize();
-        uchar* img = frame_ud.data;
-        int n = 0, len = 0;
-        while (len < imgSize) {
-            n = send(new_socket, img + len, imgSize - len, 0);
-            if (n == -1) {
-                cerr << "ERROR: Send failed" << endl;
-                break;
-            }
-            len += n;
-        }
-        if (len == -1) {
-            break;
-        }
-
-
-      }
-
       waitKey(25);
     }
   }
@@ -588,6 +569,7 @@ bool UVision::loopFrames(float seconds, string obj, string mode)
   std::vector<cv::Mat1f> filteredSamples;
   for (auto& sample : samples) {
       float distance = cv::norm(sample - mean);
+      //cout << "distance : " << distance << "\n";
       if (distance <= distanceThreshold) {
           filteredSamples.push_back(sample);
       }
@@ -618,20 +600,166 @@ bool UVision::loopFrames(float seconds, string obj, string mode)
 
 }
 
-void UVision::ballTrack(cv::Mat1f ballPos){
+void UVision::addBoundaryPoint(double x, double y) {
+    boundary.push_back((cv::Mat_<double>(2, 1) << x, y));
+}
+
+bool UVision::isWithinBoundary(double x, double y) {
+    // check if the point is inside the boundary using the "ray casting" algorithm
+    // https://en.wikipedia.org/wiki/Point_in_polygon#Ray_casting_algorithm
+    int intersections = 0;
+    for (int i = 0; i < boundary.size(); i++) {
+        double x1 = boundary[i].at<double>(0, 0);
+        double y1 = boundary[i].at<double>(0, 1);
+        double x2 = boundary[(i+1)].at<double>(0, 0);
+        double y2 = boundary[(i+1)].at<double>(0, 1);
+
+        std::cout << "boundary i: " << boundary[i] << std::endl;
+        std::cout << "boundary i+1: " << boundary[i]+1 << std::endl;
+        if (((y1 > y) != (y2 > y)) && (x < (x2 - x1) * (y - y1) / (y2 - y1) + x1)) {
+            intersections++;
+        }
+    }
+    return (intersections % 2 != 0);
+}
+
+
+void UVision::update_robot_pos(float x, float y, float angle){
+  
+
+  cv::Vec3f pos_dest(x, y, 1.0f);
+
+
+  std::cout << "PARAMS TO UPDATE : " << x << "," << y << " angle " << angle << std::endl;
+
+  float angle_radians = robot_angle * M_PI / 180;
+  float st = sin(angle_radians);
+  float ct = cos(angle_radians);
+  posToRobot = (cv::Mat1f(3,3) << ct, -st , robot_pos[0],
+                                  st,  ct , robot_pos[1],
+                                  0.f, 0.f, 1.f);
+
+  std::cout << "Matrix: " << posToRobot << std::endl;
+  cv::Mat1f posrobot = posToRobot * pos_dest;
+
+
+
+  std::cout << "OLD ROBOT POS: " << robot_pos[0] << "," << robot_pos[1] << " angle " << robot_angle << std::endl;
+
+  robot_pos[0] = posrobot.at<float>(0, 0);
+  robot_pos[1] = posrobot.at<float>(0, 1);
+  robot_angle += angle;
+
+  std::cout << "NEW ROBOT POS: " << robot_pos[0] << "," << robot_pos[1] << " angle " << robot_angle << std::endl;
+
+}
+
+cv::Mat1f UVision::robot2orig(float x, float y){
+  float angle_radians = robot_angle * M_PI / 180;
+  float st = sin(angle_radians);
+  float ct = cos(angle_radians);
+  posToRobot = (cv::Mat1f(3,3) << ct, -st , robot_pos[0],
+                                  st,  ct , robot_pos[1],
+                                  0.f, 0.f, 1.f);
+
+  cv::Vec3f pos_dest(x, y, 1.0f);
+  cv::Mat1f posrobot = posToRobot * pos_dest;
+  return posrobot;
+}
+
+cv::Mat1f UVision::orig2robot(float x, float y){ 
+  float angle_radians = robot_angle * M_PI / 180;
+  float st = sin(angle_radians);
+  float ct = cos(angle_radians);
+  posToRobot = (cv::Mat1f(3,3) << ct, -st , robot_pos[0],
+                                  st,  ct , robot_pos[1],
+                                  0.f, 0.f, 1.f); 
+  cv::Vec3f pos_dest(x, y, 1.0f);
+  cv::Mat1f posrobot = posToRobot.inv() * pos_dest;
+  return posrobot;
+}
+
+
+void UVision::move(cv::Mat1f position, string mode=""){
   float arm_dist = 0.38;
   const int MSL = 200;
   char s[MSL];
-  double radians = atan(ballPos.at<float>(0, 1) / ballPos.at<float>(0, 0));
+  double radians = atan(position.at<float>(0, 1) / position.at<float>(0, 0));
   double degrees = radians * (180.0 / M_PI);
+  float dist = sqrt(pow(position.at<float>(0, 1),2) + pow(position.at<float>(0, 0),2)) - arm_dist;
 
 
-  float dist = sqrt(pow(ballPos.at<float>(0, 1),2) + pow(ballPos.at<float>(0, 0),2)) - arm_dist;
+  if (mode=="backward"){
+    dist = -1*dist;
+    degrees = 0;    
+  }
 
-  //float x_p = 
+  float x = dist*cos(radians);
+  float y = dist*sin(radians);
 
-  std::cout << "Angle " << degrees << " degrees " << " Distance: "<< dist << std::endl;
-  sound.say(". Ball Found.", 0.3);
+  if (true){
+
+    update_robot_pos(x, y, degrees);
+    //float x_p = 
+
+    std::cout << "Angle " << degrees << " degrees " << " Distance: "<< dist << std::endl;
+    sound.say(". Object Found.", 0.3);
+    // remove old mission
+    bridge.tx("regbot mclear\n");
+    // clear events received from last mission
+    event.clearEvents();
+    //usleep(2000);
+
+    bridge.tx("regbot madd vel=0.0, log=3.0: time=0.02\n");
+
+    snprintf(s,MSL,"regbot madd vel=%.2f,tr=0.2:turn=%.1f\n", 0.2, degrees);
+    bridge.tx(s);
+    std::cout << s << std::endl;
+
+    bridge.tx("regbot madd vel=0.0: time=0.08\n");
+
+    snprintf(s,MSL,"regbot madd vel=0.2:dist=%.2f\n", dist);
+    std::cout << s << std::endl;
+    bridge.tx(s);
+
+    bridge.tx("regbot madd vel=0.0: time=0.01\n");
+
+    bridge.tx("regbot start\n");
+    event.waitForEvent(0);  
+    cout << "Move DONE...\n";
+
+  }else{
+
+    cout << "IT IS LOST--> Out of the track...\n";
+
+  }
+
+}
+
+
+
+void UVision::go_home(){
+
+  // cv::Point2f original_point{0.0, 0.0};
+  // cv::Point2f point{robot_pos[0], robot_pos[1]};
+  float x = -robot_pos[0];
+  float y = -robot_pos[1];
+  float dist = sqrt(pow(x,2) + pow(y,2));
+
+
+  robot_angle = 180 - robot_angle;
+  std::cout << "Position of origin: (" << x << ", " << y << ")" << std::endl;
+  std::cout << "robot_angle!!: " << robot_angle << std::endl;
+  
+  //update_robot_pos(x, y, robot_angle);
+
+  const int MSL = 200;
+  char s[MSL];
+
+  // cv::Mat1f new_pos = rotate_translate(robot_pos, robot_angle);
+  // move(new_pos);
+  std::cout << "Angle " << robot_angle << " degrees " << " Distance: "<< dist << std::endl;
+  sound.say(". Object Found.", 0.3);
   // remove old mission
   bridge.tx("regbot mclear\n");
   // clear events received from last mission
@@ -640,7 +768,7 @@ void UVision::ballTrack(cv::Mat1f ballPos){
 
   bridge.tx("regbot madd vel=0.0, log=3.0: time=0.02\n");
 
-  snprintf(s,MSL,"regbot madd vel=%.2f,tr=0.2:turn=%.1f\n", 0.2, degrees);
+  snprintf(s,MSL,"regbot madd vel=%.2f,tr=0.2:turn=%.1f\n", 0.2, robot_angle);
   bridge.tx(s);
   std::cout << s << std::endl;
 
@@ -653,9 +781,11 @@ void UVision::ballTrack(cv::Mat1f ballPos){
   bridge.tx("regbot madd vel=0.0: time=0.01\n");
 
   bridge.tx("regbot start\n");
-  cout << "Taking a ball...\n";
   event.waitForEvent(0);  
+
+  cout << "HOME...\n";
 }
+
 
 void UVision::takeBall(){
   //servo=1,pservo=-600, vservo=120:time=8
@@ -695,63 +825,48 @@ void UVision::releaseBall(){
 }
 
 void UVision::move_arround(){
-
-  const int MSL = 200;
-  char s[MSL];
-
-  bridge.tx("regbot mclear\n");
-  // clear events received from last mission
-  event.clearEvents();
-  //usleep(2000);
-
-  bridge.tx("regbot madd vel=0.0, log=3.0: time=0.02\n");
-
-  snprintf(s,MSL,"regbot madd vel=%.2f,tr=0.2:turn=%.1f\n", 0.2, 45.0);
-  bridge.tx(s);
-  std::cout << s << std::endl;
-
-  bridge.tx("regbot madd vel=0.0: time=0.08\n");
-
-  // snprintf(s,MSL,"regbot madd vel=0.2:dist=%.2f\n", 0.5);
-  // std::cout << s << std::endl;
-  // bridge.tx(s);
-
-  bridge.tx("regbot madd vel=0.0: time=0.01\n");
-
-  bridge.tx("regbot start\n");
-  cout << "Taking a ball...\n";
-  event.waitForEvent(0);  
-
+  cv::Vec3f vec3f(0.2f, 0.2f, 0.0f);
+  cv::Mat1f position = cv::Mat1f(vec3f);
+  move(position);
 }
-
-
-
 
 bool UVision::golf_mission(){
   int n = 1;
   UTime t;
   t.now();
+  //float val = 0.0;
+  robot_pos[0] = 0.0;
+  robot_pos[1] = 0.0;
+  robot_angle = 0.0;
+  update_robot_pos(0, 0, 0);
 
-  while(n<3 and t.getTimePassed() < 60){
+  addBoundaryPoint(0.0, 1.0);
+  addBoundaryPoint(5.0, 1.0);
+  addBoundaryPoint(0.0, -3.0);
+  addBoundaryPoint(5.0, -3.0);
+
+  while(n<3 and t.getTimePassed() < 40){
   //while(n<6){
     bool res = false;
     res = loopFrames(20, "BALL", "GROSS");
     if (res == true){
       std::cout << "# BALL FOUND "<< n <<" Pos: " << objPossition << "\n";
-      ballTrack(objPossition);
+      move(objPossition);
       //usleep(2000);
       
       res = loopFrames(5, "BALL", "FINE");
+      //res = false;
       if (res == true){
         std::cout << "# BALL FINE FOUND "<< n <<" Pos: " << objPossition << "\n";
-        ballTrack(objPossition);
+        move(objPossition);
         takeBall();
         
         res = loopFrames(20, "HOLE", "GROSS");
         if (res == true){
           std::cout << "# HOLE FOUND "<< n <<" Pos: " << objPossition << "\n";
-          ballTrack(objPossition);
+          move(objPossition);
           releaseBall();
+          move(objPossition,"backward");
           n +=1;
         }
       }
@@ -766,11 +881,11 @@ bool UVision::golf_mission(){
 
 
   }
+  go_home();
 
 
   return true;
 }
-
 
 
 bool UVision::doFindAruco(float seconds)

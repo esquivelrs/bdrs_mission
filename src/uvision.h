@@ -39,6 +39,7 @@
 #include <math.h>
 #include <map>
 #include <opencv2/core/types.hpp>
+#include <opencv2/core/core.hpp>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
@@ -49,6 +50,8 @@
 
 using namespace std;
 // forward declaration
+
+
 
 class UVision{
   
@@ -151,25 +154,49 @@ private:
   cv::Mat1f objPossition;
   bool getBalls(string mode);
   bool loopFrames(float seconds, string obj, string mode);
-  void ballTrack(cv::Mat1f ballPos);
+  void move(cv::Mat1f ballPos, string mode);
   void move_arround();
   void takeBall();
   void releaseBall();
   cv::Mat1f calc_pos3drob(cv::Vec3i obj, float diameter);
   bool findfHole();
+  cv::Mat1f rotate_translate(cv::Mat1f position, float angle);
+  void update_robot_pos(float x, float y, float angle);
+
+
+  void go_home();
 
 
   int server_fd, new_socket;
   struct sockaddr_in address;
 
 
+  //For fine tunning of the ball
   int cx_for_ball = 648;
   int cy_for_ball = 454;
   int dx_for_ball = 400;
   int dy_for_ball = 400;
 
-  
+  //position in robot coordinates (x (forward), y (left), z (up)) */
+  std::vector<cv::Mat> boundary;
+  void addBoundaryPoint(double x, double y);
+  bool isWithinBoundary(double x, double y);
 
+  float robot_pos[2];
+  float robot_angle;
+  cv::Mat1f posToRobot;
+
+
+  cv::Mat1f robot2orig(float x, float y);
+  cv::Mat1f orig2robot(float x, float y);
+
+  const cv::Scalar low_orange = cv::Scalar(0, 0, 250);
+  const cv::Scalar up_orange = cv::Scalar(30, 255, 255);
+
+  const cv::Scalar low_blue = cv::Scalar(82,24,255);
+  const cv::Scalar up_blue = cv::Scalar(128, 255, 255);
+
+  float distanceThreshold = 0.005;
   
 };
 

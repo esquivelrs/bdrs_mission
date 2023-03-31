@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = -isystem /usr/local/include/opencv4
 
-CXX_FLAGS =  -Wall -pedantic -std=c++17 
+CXX_FLAGS =  -Wall -pedantic -std=c++17  -g
 

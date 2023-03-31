@@ -1,0 +1,47 @@
+[
+{
+  "directory": "/home/resquivel/Documents/BDRS/build",
+  "command": "/usr/bin/g++  -isystem /usr/local/include/opencv4  -Wall -pedantic -std=c++17  -g -o CMakeFiles/mission.dir/main.cpp.o -c /home/resquivel/Documents/BDRS/main.cpp",
+  "file": "/home/resquivel/Documents/BDRS/main.cpp"
+},
+{
+  "directory": "/home/resquivel/Documents/BDRS/build",
+  "command": "/usr/bin/g++  -isystem /usr/local/include/opencv4  -Wall -pedantic -std=c++17  -g -o CMakeFiles/mission.dir/src/ubridge.cpp.o -c /home/resquivel/Documents/BDRS/src/ubridge.cpp",
+  "file": "/home/resquivel/Documents/BDRS/src/ubridge.cpp"
+},
+{
+  "directory": "/home/resquivel/Documents/BDRS/build",
+  "command": "/usr/bin/g++  -isystem /usr/local/include/opencv4  -Wall -pedantic -std=c++17  -g -o CMakeFiles/mission.dir/src/upose.cpp.o -c /home/resquivel/Documents/BDRS/src/upose.cpp",
+  "file": "/home/resquivel/Documents/BDRS/src/upose.cpp"
+},
+{
+  "directory": "/home/resquivel/Documents/BDRS/build",
+  "command": "/usr/bin/g++  -isystem /usr/local/include/opencv4  -Wall -pedantic -std=c++17  -g -o CMakeFiles/mission.dir/src/ucomment.cpp.o -c /home/resquivel/Documents/BDRS/src/ucomment.cpp",
+  "file": "/home/resquivel/Documents/BDRS/src/ucomment.cpp"
+},
+{
+  "directory": "/home/resquivel/Documents/BDRS/build",
+  "command": "/usr/bin/g++  -isystem /usr/local/include/opencv4  -Wall -pedantic -std=c++17  -g -o CMakeFiles/mission.dir/src/ustate.cpp.o -c /home/resquivel/Documents/BDRS/src/ustate.cpp",
+  "file": "/home/resquivel/Documents/BDRS/src/ustate.cpp"
+},
+{
+  "directory": "/home/resquivel/Documents/BDRS/build",
+  "command": "/usr/bin/g++  -isystem /usr/local/include/opencv4  -Wall -pedantic -std=c++17  -g -o CMakeFiles/mission.dir/src/uvision.cpp.o -c /home/resquivel/Documents/BDRS/src/uvision.cpp",
+  "file": "/home/resquivel/Documents/BDRS/src/uvision.cpp"
+},
+{
+  "directory": "/home/resquivel/Documents/BDRS/build",
+  "command": "/usr/bin/g++  -isystem /usr/local/include/opencv4  -Wall -pedantic -std=c++17  -g -o CMakeFiles/mission.dir/src/utime.cpp.o -c /home/resquivel/Documents/BDRS/src/utime.cpp",
+  "file": "/home/resquivel/Documents/BDRS/src/utime.cpp"
+},
+{
+  "directory": "/home/resquivel/Documents/BDRS/build",
+  "command": "/usr/bin/g++  -isystem /usr/local/include/opencv4  -Wall -pedantic -std=c++17  -g -o CMakeFiles/mission.dir/src/uplay.cpp.o -c /home/resquivel/Documents/BDRS/src/uplay.cpp",
+  "file": "/home/resquivel/Documents/BDRS/src/uplay.cpp"
+},
+{
+  "directory": "/home/resquivel/Documents/BDRS/build",
+  "command": "/usr/bin/g++  -isystem /usr/local/include/opencv4  -Wall -pedantic -std=c++17  -g -o CMakeFiles/mission.dir/src/uevent.cpp.o -c /home/resquivel/Documents/BDRS/src/uevent.cpp",
+  "file": "/home/resquivel/Documents/BDRS/src/uevent.cpp"
+}
+]
