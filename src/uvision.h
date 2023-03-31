@@ -150,6 +150,7 @@ private:
 
 
   cv::Mat1f holePos;
+  cv::Mat1f ballPos;
 
   cv::Mat1f objPossition;
   bool getBalls(string mode);
@@ -196,7 +197,7 @@ private:
   const cv::Scalar low_blue = cv::Scalar(82,24,255);
   const cv::Scalar up_blue = cv::Scalar(128, 255, 255);
 
-  float distanceThreshold = 0.005;
+  float distanceThreshold = 0.1;
   
 };
 

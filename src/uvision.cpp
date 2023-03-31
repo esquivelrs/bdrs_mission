@@ -302,75 +302,71 @@ bool UVision::getBalls(string mode="GROSS"){
     // Step 4: Apply the mask to the input image
     frame_ud.copyTo(frame_prep, mask);
     min_radio = 70;
-  }
-  else{
-    cv::cvtColor(frame_ud, frame_HSV, COLOR_BGR2HSV);
-    cv::blur(frame_HSV, frame_HSV, cv::Size(7, 7));
-    cv::inRange(frame_HSV, low_orange, up_orange ,frame_threshold);
-    cv::erode(frame_threshold, frame_ed, cv::Mat(), cv::Point(-1,-1), 5);
-    cv::dilate(frame_ed, frame_ed, cv::Mat(), cv::Point(-1,-1), 40);
-    frame_ud.copyTo(frame_prep, frame_ed);
+  }else{
+    frame_prep = frame_ud;
+
   }
   if (showImage)
   {
     imshow("THR", frame_prep);
   }
 
+  cv::cvtColor(frame_ud, frame_HSV, COLOR_BGR2HSV);
+  cv::blur(frame_HSV, frame_HSV, cv::Size(5, 5));
+  // Lower values: 210.678 81.12039999999999 74.228
+  // Upper values: 230.678 181.1204 174.228
+  
+  cv::inRange(frame_HSV, low_orange, up_orange,frame_threshold);
+  //cv::inRange(frame_YUV, Scalar(210,80,74), Scalar(230, 181, 174),frame_threshold);
+  //cv::inRange(frame_YUV, Scalar(165,130,120), Scalar(200, 140, 135),frame_threshold);
 
-  cv::cvtColor(frame_prep, frame_gray, COLOR_BGR2GRAY);
-  cv::GaussianBlur(frame_gray, frame_gray, Size(9, 9), 0);
+  cv::erode(frame_threshold, frame_ed, cv::Mat(), cv::Point(-1,-1), 2);
+  cv::dilate(frame_ed, frame_ed, cv::Mat(), cv::Point(-1,-1), 2);
 
-  vector<Vec3f> circles;
-  // cv::HoughCircles(frame_gray, circles, HOUGH_GRADIENT, 1,
-  //             frame_gray.rows/4,  // change this value to detect circles with different distances to each other
-  //             200, 5, 40, 100 // change the last two parameters
-  //         // (min_radius & max_radius) to detect larger circles
-  // );
-  cv::HoughCircles(frame_gray, circles, HOUGH_GRADIENT, 1,
-              frame_gray.rows/4,  // change this value to detect circles with different distances to each other
-              100, 25, min_radio, 100 // change the last two parameters
-          // (min_radius & max_radius) to detect larger circles
-  );
-  for( size_t i = 0; i < circles.size(); i++ )
-  {
-      Vec3i c = circles[i];
-      Point center = Point(c[0], c[1]);
-      // circle center
-
-
-      if (0<(c[0]-c[2]/4) && (c[0]+c[2]/4)<frame.cols && 0<(c[1]-c[2]/4) && (c[1]+c[2]/4)<frame.rows){
-        
-        cv::cvtColor(frame_ud, frame_HSV, COLOR_BGR2HSV);
-        cv::Mat roi = frame_HSV(cv::Range(c[1]-c[2]/8, c[1]+c[2]/8), cv::Range(c[0]-c[2]/8, c[0]+c[2]/8));
-        cv::Mat1b mask(roi.rows, roi.cols);
-        cv::Scalar mean = cv::mean(roi, mask);
-        int hue = round(mean[0]);
-        int sat = round(mean[1]);
-        int val = round(mean[2]);
-        cout << "CIRCLE FOUND: " << center << " radio: " << c[2] << " hue: " << hue << " sat: " << sat << " val: " << val <<"\n";
-
-        if (hue< 30 and val>160){
-        //if (hue< 30){
-          cout << "BALL FOUND: " << center;
-          cout << " radio: " << c[2] << " hue: " << hue << "\n";
-          cv::circle( frame_ud, center, 1, Scalar(0,100,100), 3, LINE_AA);
-          // circle outline
-          int radius = c[2];
-          cv::circle( frame_ud, center, radius, Scalar(255,0,255), 3, LINE_AA);
-          std::string text = "BALL FOUND: (" + std::to_string(center.x) + ", " + std::to_string(center.y) + ")" + " radio: " + std::to_string(c[2]) + "hsv" + std::to_string(hue) + "," + std::to_string(sat)+ "," + std::to_string(val); 
-          cv::putText(frame_ud, text, center, cv::FONT_HERSHEY_DUPLEX, 0.4, cv::Scalar(0,0,0), 2, false);
-          
-          f_circle[0] = c[0];
-          f_circle[1] = c[1];
-          f_circle[2] = radius;
-
-          balls_dict[radius] = calc_pos3drob(f_circle, golfBallDiameter);
-          ball = true;
-
-
-        }
+  cv::Mat labels, stats, centroids;
+  int num_labels = cv::connectedComponentsWithStats(frame_ed, labels, stats, centroids);
+  cv::Mat result = cv::Mat::zeros(frame_ed.size(), CV_8UC3);
+  int max_area = -1;
+  int max_label = -1;
+  for (int i = 1; i < num_labels; i++) {
+      int area = stats.at<int>(i, cv::CC_STAT_AREA);
+      if (area > max_area) {
+          max_area = area;
+          max_label = i;
       }
   }
+
+  // Print the centroid and area
+  std::cout << "Centroid: (" << centroids.at<double>(max_label, 0) << ", " << centroids.at<double>(max_label, 1) << ")" << std::endl;
+  std::cout << "Area: " << max_area << std::endl;
+
+  if (max_area>10){
+    float diameter = 2*sqrt(max_area/M_PI);
+
+    f_circle[0] = centroids.at<double>(max_label, 0);
+    f_circle[1] = centroids.at<double>(max_label, 1);
+    f_circle[2] = stats.at<int>(max_label, cv::CC_STAT_WIDTH)/2;
+
+    holePos = calc_pos3drob(f_circle, diameter);
+    ball = true;
+    
+  }
+
+  if (showImage)
+  {
+    imshow("HOLE", frame_ed);
+    // Draw bounding box around the component with the maximum area
+    if (max_label != -1) {
+        cv::Rect bbox(stats.at<int>(max_label, cv::CC_STAT_LEFT),
+                      stats.at<int>(max_label, cv::CC_STAT_TOP),
+                      stats.at<int>(max_label, cv::CC_STAT_WIDTH),
+                      stats.at<int>(max_label, cv::CC_STAT_HEIGHT));
+        cv::rectangle(frame_ud, bbox, cv::Scalar(0, 0, 255), 2);
+    }
+
+    imshow("HOLE_HSV", frame_HSV);
+  }
+
   return ball;
 }
 
@@ -507,19 +503,9 @@ bool UVision::loopFrames(float seconds, string obj, string mode)
     if (gotFrame){
       if (obj == "BALL"){
         found = getBalls(mode);
+        found = findfHole();
         if (found==true){
-
-          float max_radius = std::numeric_limits<float>::min();
-          for (const auto& it : balls_dict)
-          {
-              if (it.first > max_radius)
-              {
-                  max_radius = it.first;
-                  pos3drob = it.second;
-              }
-          }
-
-          balls_dict.erase(max_radius);
+          pos3drob = ballPos;
         }
       }
 
@@ -569,7 +555,7 @@ bool UVision::loopFrames(float seconds, string obj, string mode)
   std::vector<cv::Mat1f> filteredSamples;
   for (auto& sample : samples) {
       float distance = cv::norm(sample - mean);
-      //cout << "distance : " << distance << "\n";
+      cout << "distance : " << distance << "\n";
       if (distance <= distanceThreshold) {
           filteredSamples.push_back(sample);
       }
@@ -586,7 +572,7 @@ bool UVision::loopFrames(float seconds, string obj, string mode)
   cout << "Mean: " << objPossition << std::endl;
   cout << "Samples " << samples.size() << std::endl;
 
-  if (samples.size()>5){
+  if (filteredSamples.size()>5){
     
     return true;
 
