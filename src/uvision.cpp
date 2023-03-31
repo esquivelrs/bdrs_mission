@@ -39,6 +39,10 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <map>
+#include <arpa/inet.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
+
 using namespace std;
 using namespace cv;
 
@@ -144,50 +148,86 @@ void UVision::setup(int argc, char **argv)
   std::cout << "Distortion coefficients: " << std::endl << dist_coeffs << std::endl;
 
   if (streaming){
+    int localSocket,
+        remoteSocket,
+        port;
+    int reuseaddr = 1; /* True */
 
-    std::cout << "CONNECTION SETUP!!!"  << std::endl;
+    struct sockaddr_in localAddr, remoteAddr;
+    pthread_t thread_id;
 
-    int server_fd, opt = 1;
-    struct sockaddr_in address;
-    int addrlen = sizeof(address);
+    if (argc == 2)
+        port = atoi(argv[1]);
+    else
+        port = 4097;
 
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
-        std::cerr << "socket failed"<< std::endl;
-        exit(EXIT_FAILURE);
+    
+
+    int addrLen = sizeof(struct sockaddr_in);
+
+    if ((argc > 1) && (strcmp(argv[1], "-h") == 0))
+    {
+        std::cerr << "usage: ./cv_video_srv [port] [capture device]\n"
+                  << "port           : socket port (4097 default)\n"
+                  << "capture device : (0 default)\n"
+                  << std::endl;
+
+        exit(1);
     }
 
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
-        std::cerr << "setsockopt"<< std::endl;
-        exit(EXIT_FAILURE);
+
+
+    localSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (localSocket == -1)
+    {
+        perror("socket() call failed!!");
     }
 
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = htonl(INADDR_ANY);
-    address.sin_port = htons(PORT);
-
-    std::cout << "CONNECTION33!!!"  << std::endl;
-    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
-        std::cerr << "bind failed"<< std::endl;
-        exit(EXIT_FAILURE);
+    /* Enable the socket to reuse the address */
+    if (setsockopt(localSocket, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof(int)) == -1)
+    {
+        perror("setsockopt");
+        return 1;
     }
 
-    std::cout << "CONNECTION44!!!"  << std::endl;
-    if (listen(server_fd, 3) < 0) {
-        std::cerr << "listen"<< std::endl;
-        exit(EXIT_FAILURE);
+    localAddr.sin_family = AF_INET;
+    localAddr.sin_addr.s_addr = INADDR_ANY;
+    localAddr.sin_port = htons(port);
+
+    if (bind(localSocket, (struct sockaddr *)&localAddr, sizeof(localAddr)) < 0)
+    {
+        perror("Can't bind() socket");
+        exit(1);
     }
 
-    std::cout << "CONNECTION55!!!"  << std::endl;
+    // Listening
+    listen(localSocket, 3);
 
-    if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
-        std::cerr << "accept"<< std::endl;
-        exit(EXIT_FAILURE);
+    std::cout << "Waiting for connections...\n"
+              << "Server Port:" << port << std::endl;
+
+    // accept connection from an incoming client
+    while (1)
+    {
+        // if (remoteSocket < 0) {
+        //     perror("accept failed!");
+        //     exit(1);
+        // }
+
+        remoteSocket = accept(localSocket, (struct sockaddr *)&remoteAddr, (socklen_t *)&addrLen);
+        // std::cout << remoteSocket<< "32"<< std::endl;
+        if (remoteSocket < 0)
+        {
+            perror("accept failed!");
+            exit(1);
+        }
+        std::cout << "Connection accepted" << std::endl;
+        pthread_create(&thread_id, NULL, display, &remoteSocket);
+
+        // pthread_join(thread_id,NULL);
     }
-    std::cout << "CONNECTION66!!!"  << std::endl;
 
-    close(server_fd);
 
-    std::cout << "CONNECTION!!!"  << std::endl;
 
 
   }
@@ -204,7 +244,7 @@ void UVision::stop()
     // close
     cap.release();
   }
-  close(new_socket);
+  close(socket);
 }
 
 bool UVision::decode(char* msg)
@@ -479,7 +519,6 @@ bool UVision::findfHole(){
 bool UVision::loopFrames(float seconds, string obj, string mode)
 {
   cout << "# LOOP FRAMES FOR" << obj << "\n";
-
   vector<cv::Mat1f> samples;
   cv::Mat1f accumulated = cv::Mat1f::zeros(1, 3);  // Accumulated sum
   int numSamples = 0;
@@ -556,6 +595,19 @@ bool UVision::loopFrames(float seconds, string obj, string mode)
       {
         imshow("IMG_FRAMES", frame_ud);
         //imshow("RAW", frame);
+
+      }
+
+      if (streaming)
+      {
+        // send processed image
+        int imgSize = frame_ud.total() * frame_ud.elemSize();
+        if ((bytes = send(socket, frame_ud.data, imgSize, 0)) < 0)
+        {
+            close(socket);
+            std::cerr << "bytes = " << bytes << std::endl;
+            break;
+        }
 
       }
       
@@ -831,6 +883,8 @@ void UVision::move_arround(){
 }
 
 bool UVision::golf_mission(){
+
+  socket = *(int *)ptr;
   int n = 1;
   UTime t;
   t.now();

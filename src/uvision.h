@@ -197,6 +197,8 @@ private:
   const cv::Scalar up_blue = cv::Scalar(120, 255, 255);
 
   float distanceThreshold = 0.005;
+
+  int socket;
   
 };
 
