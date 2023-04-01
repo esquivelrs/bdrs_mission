@@ -55,7 +55,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/resquivel/Documents/BDRS/build"
+			"value" : "/home/local/mission/build"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -79,7 +79,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "22"
+			"value" : "18"
 		},
 		{
 			"name" : "CMAKE_CACHE_PATCH_VERSION",
@@ -91,7 +91,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "1"
+			"value" : "4"
 		},
 		{
 			"name" : "CMAKE_COLOR_MAKEFILE",
@@ -175,7 +175,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/gcc-ar-11"
+			"value" : "/usr/bin/gcc-ar-10"
 		},
 		{
 			"name" : "CMAKE_CXX_COMPILER_RANLIB",
@@ -191,7 +191,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/gcc-ranlib-11"
+			"value" : "/usr/bin/gcc-ranlib-10"
 		},
 		{
 			"name" : "CMAKE_CXX_FLAGS",
@@ -303,7 +303,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/gcc-ar-11"
+			"value" : "/usr/bin/gcc-ar-10"
 		},
 		{
 			"name" : "CMAKE_C_COMPILER_RANLIB",
@@ -319,7 +319,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/gcc-ranlib-11"
+			"value" : "/usr/bin/gcc-ranlib-10"
 		},
 		{
 			"name" : "CMAKE_C_FLAGS",
@@ -595,6 +595,30 @@
 				}
 			],
 			"type" : "INTERNAL",
+			"value" : ""
+		},
+		{
+			"name" : "CMAKE_HAVE_PTHREADS_CREATE",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Have library pthreads"
+				}
+			],
+			"type" : "INTERNAL",
+			"value" : ""
+		},
+		{
+			"name" : "CMAKE_HAVE_PTHREAD_CREATE",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Have library pthread"
+				}
+			],
+			"type" : "INTERNAL",
 			"value" : "1"
 		},
 		{
@@ -619,7 +643,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/resquivel/Documents/BDRS"
+			"value" : "/home/local/mission"
 		},
 		{
 			"name" : "CMAKE_INSTALL_PREFIX",
@@ -907,7 +931,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/usr/share/cmake-3.22"
+			"value" : "/usr/share/cmake-3.18"
 		},
 		{
 			"name" : "CMAKE_SHARED_LINKER_FLAGS",
@@ -1155,7 +1179,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "[/usr/local][v4.7.0()]"
+			"value" : "[/usr][v4.5.1()]"
 		},
 		{
 			"name" : "FIND_PACKAGE_MESSAGE_DETAILS_Threads",
@@ -1179,7 +1203,7 @@
 				}
 			],
 			"type" : "PATH",
-			"value" : "/usr/local/lib/cmake/opencv4"
+			"value" : "/usr/lib/arm-linux-gnueabihf/cmake/opencv4"
 		},
 		{
 			"name" : "mission_BINARY_DIR",
@@ -1191,19 +1215,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/resquivel/Documents/BDRS/build"
-		},
-		{
-			"name" : "mission_IS_TOP_LEVEL",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Value Computed by CMake"
-				}
-			],
-			"type" : "STATIC",
-			"value" : "ON"
+			"value" : "/home/local/mission/build"
 		},
 		{
 			"name" : "mission_SOURCE_DIR",
@@ -1215,7 +1227,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/resquivel/Documents/BDRS"
+			"value" : "/home/local/mission"
 		}
 	],
 	"kind" : "cache",
