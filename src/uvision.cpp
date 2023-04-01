@@ -287,7 +287,7 @@ bool UVision::getBalls(string mode="GROSS"){
   bool ball= false;
   Vec3i f_circle(0,0,0);
   Mat frame_HSV, frame_gray, frame_threshold, frame_ed, frame_prep, mask;
-  int min_radio = 40;
+  int min_radio = 30;
 
   if (mode == "FINE"){
 
@@ -305,7 +305,7 @@ bool UVision::getBalls(string mode="GROSS"){
   }
 
   cv::cvtColor(frame_ud, frame_HSV, COLOR_BGR2HSV);
-  cv::blur(frame_HSV, frame_HSV, cv::Size(7, 7));
+  //cv::blur(frame_HSV, frame_HSV, cv::Size(7, 7));
   cv::inRange(frame_HSV, low_orange, up_orange ,frame_threshold);
   cv::erode(frame_threshold, frame_ed, cv::Mat(), cv::Point(-1,-1), 1);
   cv::dilate(frame_ed, frame_ed, cv::Mat(), cv::Point(-1,-1), 1);
@@ -325,9 +325,9 @@ bool UVision::getBalls(string mode="GROSS"){
   //             200, 5, 40, 100 // change the last two parameters
   //         // (min_radius & max_radius) to detect larger circles
   // );
-  cv::HoughCircles(frame_ed, circles, HOUGH_GRADIENT, 1,
-              frame_gray.rows/4,  // change this value to detect circles with different distances to each other
-              140, 25, min_radio, 100 // change the last two parameters
+  cv::HoughCircles(frame_ed, circles, HOUGH_GRADIENT, 1.15,
+              frame_ed.rows/4,  // change this value to detect circles with different distances to each other
+              85, 15, min_radio, 100 // change the last two parameters
           // (min_radius & max_radius) to detect larger circles
   );
   for( size_t i = 0; i < circles.size(); i++ )
@@ -352,10 +352,10 @@ bool UVision::getBalls(string mode="GROSS"){
         //if (hue< 30){
           cout << "BALL FOUND: " << center;
           cout << " radio: " << c[2] << " hue: " << hue << "\n";
-          cv::circle( frame_ud, center, 1, Scalar(0,100,100), 3, LINE_AA);
+          cv::circle( frame_ud, center, 1, Scalar(0,255,0), 1, LINE_AA);
           // circle outline
           int radius = c[2];
-          cv::circle( frame_ud, center, radius, Scalar(255,0,255), 3, LINE_AA);
+          cv::circle( frame_ud, center, radius, Scalar(255,0,255), 1, LINE_AA);
           std::string text = "BALL FOUND: (" + std::to_string(center.x) + ", " + std::to_string(center.y) + ")" + " radio: " + std::to_string(c[2]) + "hsv" + std::to_string(hue) + "," + std::to_string(sat)+ "," + std::to_string(val); 
           cv::putText(frame_ud, text, center, cv::FONT_HERSHEY_DUPLEX, 0.4, cv::Scalar(0,0,0), 2, false);
           
@@ -868,7 +868,7 @@ bool UVision::golf_mission(){
   addBoundaryPoint(0.0, -3.0);
   addBoundaryPoint(5.0, -3.0);
   releaseBall();
-  while(n<3 and t.getTimePassed() < 120){
+  while(n<3 and t.getTimePassed() < 20){
   //while(n<6){
     bool res = false;
     res = loopFrames(20, "BALL", "GROSS");
