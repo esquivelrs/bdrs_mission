@@ -10,6 +10,8 @@ CMakeFiles/mission.dir/main.cpp.o: ../src/upose.h
 CMakeFiles/mission.dir/main.cpp.o: ../src/ustate.h
 CMakeFiles/mission.dir/main.cpp.o: ../src/utime.h
 CMakeFiles/mission.dir/main.cpp.o: ../src/uvision.h
+CMakeFiles/mission.dir/main.cpp.o: /usr/include/opencv4/opencv2/aruco.hpp
+CMakeFiles/mission.dir/main.cpp.o: /usr/include/opencv4/opencv2/aruco/dictionary.hpp
 CMakeFiles/mission.dir/main.cpp.o: /usr/include/opencv4/opencv2/core.hpp
 CMakeFiles/mission.dir/main.cpp.o: /usr/include/opencv4/opencv2/core/base.hpp
 CMakeFiles/mission.dir/main.cpp.o: /usr/include/opencv4/opencv2/core/bufferpool.hpp
@@ -52,6 +54,8 @@ CMakeFiles/mission.dir/src/ubridge.cpp.o: ../src/uevent.h
 CMakeFiles/mission.dir/src/ubridge.cpp.o: ../src/upose.h
 CMakeFiles/mission.dir/src/ubridge.cpp.o: ../src/ustate.h
 CMakeFiles/mission.dir/src/ubridge.cpp.o: ../src/uvision.h
+CMakeFiles/mission.dir/src/ubridge.cpp.o: /usr/include/opencv4/opencv2/aruco.hpp
+CMakeFiles/mission.dir/src/ubridge.cpp.o: /usr/include/opencv4/opencv2/aruco/dictionary.hpp
 CMakeFiles/mission.dir/src/ubridge.cpp.o: /usr/include/opencv4/opencv2/core.hpp
 CMakeFiles/mission.dir/src/ubridge.cpp.o: /usr/include/opencv4/opencv2/core/base.hpp
 CMakeFiles/mission.dir/src/ubridge.cpp.o: /usr/include/opencv4/opencv2/core/bufferpool.hpp

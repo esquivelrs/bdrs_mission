@@ -11,6 +11,8 @@ CMakeFiles/mission.dir/main.cpp.o
  /home/local/mission/src/ustate.h
  /home/local/mission/src/utime.h
  /home/local/mission/src/uvision.h
+ /usr/include/opencv4/opencv2/aruco.hpp
+ /usr/include/opencv4/opencv2/aruco/dictionary.hpp
  /usr/include/opencv4/opencv2/core.hpp
  /usr/include/opencv4/opencv2/core/base.hpp
  /usr/include/opencv4/opencv2/core/bufferpool.hpp
@@ -53,6 +55,8 @@ CMakeFiles/mission.dir/src/ubridge.cpp.o
  /home/local/mission/src/upose.h
  /home/local/mission/src/ustate.h
  /home/local/mission/src/uvision.h
+ /usr/include/opencv4/opencv2/aruco.hpp
+ /usr/include/opencv4/opencv2/aruco/dictionary.hpp
  /usr/include/opencv4/opencv2/core.hpp
  /usr/include/opencv4/opencv2/core/base.hpp
  /usr/include/opencv4/opencv2/core/bufferpool.hpp
