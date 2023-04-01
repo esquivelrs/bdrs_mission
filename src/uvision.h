@@ -92,7 +92,8 @@ public:
    * focal length for Sandberg camera in pixels */
   const int focalLength = 1008;
   const float golfBallDiameter = 0.043; // meter
-  const float holeDiameter = 0.1; // meter
+  const float holeDiameter = 0.27; // meter
+  float arm_dist = 0.39;
   /**
    * camera position in robot coordinates (x (forward), y (left), z (up)) */
   const float camPos[3] = {0.190,0.0, 0.175};       // in meters
@@ -150,7 +151,6 @@ private:
 
 
   cv::Mat1f holePos;
-  cv::Mat1f ballPos;
 
   cv::Mat1f objPossition;
   bool getBalls(string mode);
@@ -191,13 +191,14 @@ private:
   cv::Mat1f robot2orig(float x, float y);
   cv::Mat1f orig2robot(float x, float y);
 
-  const cv::Scalar low_orange = cv::Scalar(0, 44, 205);
+  const cv::Scalar low_orange = cv::Scalar(0, 20, 205);
   const cv::Scalar up_orange = cv::Scalar(30, 255, 255);
 
   const cv::Scalar low_blue = cv::Scalar(90,20,200);
   const cv::Scalar up_blue = cv::Scalar(120, 255, 255);
 
-  float distanceThreshold = 0.1;
+  float distanceThreshold = 0.05;
+  int move_arround_dir;
   
 };
 
