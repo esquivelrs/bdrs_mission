@@ -314,6 +314,25 @@ void seesaw()
 
 }
 
+
+void stairs()
+{
+  bridge.tx("regbot mclear\n");
+  event.clearEvents();
+
+  bridge.tx("regbot madd servo=1, pservo=-550, vservo=100: time=10 \n");
+  bridge.tx("regbot madd servo=1, pservo=-950, vservo=50: time=15 \n");
+
+  // start this mission
+  bridge.tx("regbot start\n");
+  cout << "user:# Waiting for " + string(__func__) + " to finish" << endl;
+  event.waitForEvent(0);
+  cout << "user:# obstacle " + string(__func__) + " has finished" << endl;
+}
+
+
+
+
 void tunnel()
 {
   bridge.tx("regbot mclear\n");
@@ -574,7 +593,7 @@ int main(int argc, char **argv)
 
   // testMethod();
   // gripExample();
-
+  stairs();
   // guillotineRampSequence();  // works
   // restartRamp();             // works
   // seesawSequence();          // buggy after seesaw
