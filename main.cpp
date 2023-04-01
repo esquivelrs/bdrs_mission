@@ -319,12 +319,32 @@ void seesawMidToLine()
 
 void avoidPatrolRobot()
 {
+  bridge.tx("regbot mclear\n");
+  event.clearEvents();
 
+  bridge.tx("regbot madd vel=0.3: dist=0.5, lv=20 \n");
+  bridge.tx("regbot madd vel=0.4, edger=0, white=1: lv<4, xl>15 \n");
+  bridge.tx("regbot madd vel=0.4: dist=0.2 \n");
+  bridge.tx("regbot madd vel=0.4, tr=0.4: turn=-45 \n");
+  bridge.tx("regbot madd vel=0.4: dist=0.5 \n");
+  bridge.tx("regbot madd vel=0.4, tr=0.4: turn=45 \n");
+  bridge.tx("regbot madd vel=0.4: dist=2.0, lv=20 \n");
+  bridge.tx("regbot madd vel=0.4: dist=1.5 \n");
+  bridge.tx("regbot madd vel=0.4, tr=0.4: turn=45 \n");
+  bridge.tx("regbot madd vel=0.4: dist=1.5 \n");
+  bridge.tx("regbot madd vel=0.3: lv=20, dist=2.0 \n");
+  bridge.tx("regbot madd vel=0.4, edger=0, white=1: dist=0.4, lv<4 \n");
+
+  // start this mission
+  bridge.tx("regbot start\n");
+  cout << "user:# Waiting for " + string(__func__) + " to finish\n" << endl;
+  event.waitForEvent(0);
+  cout <<  "user:# obstacle " + string(__func__) + " has finished\n" << endl;
 }
 
 void holeToHome()
 {
-  
+
 }
 
 void fanningPattern()
@@ -636,8 +656,8 @@ void seesawSequence()
   homeToSeesawMid();
   // TODO: grip ball sequence
   // seesawMidToLine(); 
-  // TODO: avoid patrol robot
-  // fanningPattern();
+  // avoidPatrolRobot // TODO: check distances
+  // fanningPattern(); // TODO: check distances
   // TODO: grab next ball;
   // fanningPattern();
   // TODO: holeToHome();
