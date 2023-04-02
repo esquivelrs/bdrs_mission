@@ -51,8 +51,6 @@ using namespace cv;
 UVision vision;
 
 
-Ptr<aruco::Dictionary> dictionary = cv::makePtr<aruco::Dictionary>(aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_100));
-
 
 
 
@@ -857,12 +855,60 @@ void UVision::releaseBall(){
   bridge.tx("regbot madd servo=1,pservo=600,vservo=120:time=8\n");
 
   bridge.tx("regbot start\n");
-  cout << "Taking a ball...\n";
+  cout << "Releasing a ball...\n";
   event.waitForEvent(0); 
 
 }
 
-void UVision::turn_angle(int angle){
+void UVision::prepareArmAruco(){
+  //servo=1,pservo=-600, vservo=120:time=8
+
+  bridge.tx("regbot mclear\n");
+  // clear events received from last mission
+  event.clearEvents();
+  //usleep(2000);
+ 
+  bridge.tx("regbot madd servo=1,pservo=-100,vservo=120:time=8\n");
+  bridge.tx("regbot madd servo=2,pservo=100:time=2\n");
+
+  bridge.tx("regbot start\n");
+  cout << "prepare arm...\n";
+  event.waitForEvent(0); 
+}
+
+void UVision::takeAruco(){
+  //servo=1,pservo=-600, vservo=120:time=8
+
+  bridge.tx("regbot mclear\n");
+  // clear events received from last mission
+  event.clearEvents();
+  //usleep(2000);
+ 
+  bridge.tx("regbot madd servo=2,pservo=-600:time=2\n");
+  bridge.tx("regbot madd servo=1,pservo=600,vservo=120:time=8\n");
+
+  bridge.tx("regbot start\n");
+  cout << "Taking a ARUCO...\n";
+  event.waitForEvent(0); 
+}
+
+void UVision::releaseAruco(){
+  //servo=1,pservo=-600, vservo=120:time=8
+
+  bridge.tx("regbot mclear\n");
+  // clear events received from last mission
+  event.clearEvents();
+  //usleep(2000);
+ 
+  bridge.tx("regbot madd servo=1,pservo=-100,vservo=120:time=8\n");
+  bridge.tx("regbot madd servo=2,pservo=100:time=2\n");
+
+  bridge.tx("regbot start\n");
+  cout << "Release Aruco...\n";
+  event.waitForEvent(0); 
+}
+
+void UVision::turn_angle(float angle, float vel){
   const int MSL = 200;
   char s[MSL];
   sound.say("HOME", 0.3);
@@ -871,13 +917,35 @@ void UVision::turn_angle(int angle){
 
   bridge.tx("regbot madd vel=0.0, log=3.0: time=0.02\n");
 
-  snprintf(s,MSL,"regbot madd vel=%.2f,tr=0.2:turn=%.1f\n", 0.2, angle);
+  snprintf(s,MSL,"regbot madd vel=%.2f,tr=0.2:turn=%.2f\n", vel, angle);
+  bridge.tx(s);
+  std::cout << s << std::endl;
+  bridge.tx("regbot madd vel=0.0: time=0.08\n");
+
+  bridge.tx("regbot start\n");
+  cout << "turn angle..."<< angle << "\n";
+  event.waitForEvent(0); 
+
+}
+
+
+
+void UVision::drive(float dist, float vel){
+  const int MSL = 200;
+  char s[MSL];
+  sound.say("HOME", 0.3);
+  bridge.tx("regbot mclear\n");
+  event.clearEvents();
+
+  bridge.tx("regbot madd vel=0.0, log=3.0: time=0.02\n");
+
+  snprintf(s,MSL,"regbot madd vel=%.2f:dist=%.2f\n",vel, dist);
   bridge.tx(s);
   std::cout << s << std::endl;
   bridge.tx("regbot madd vel=0.0: time=0.02\n");
 
   bridge.tx("regbot start\n");
-  cout << "Taking a ball...\n";
+  cout << "drive...\n";
   event.waitForEvent(0); 
 
 }
@@ -963,109 +1031,30 @@ bool UVision::golf_mission(){
 
 cv::Mat1f UVision::aruco_location(){
   
-  cv::Vec3i pos_in_frame(0, 0, 0);
-  cv::Mat1f aruco_pos;
 
-  // Detect the markers in the image
-  std::vector<int> markerIds;
-  std::vector<std::vector<Point2f>> markerCorners;
-  aruco::detectMarkers(frame_ud, dictionary, markerCorners, markerIds);
-  
-  // Draw the marker outlines on the image
-  aruco::drawDetectedMarkers(frame_ud, markerCorners, markerIds);
-
-  for (int i = 0; i < markerIds.size(); i++) {
-    int markerId = markerIds[i];
-    // Calculate the center of the marker
-    cv::Point2f center(0.f, 0.f);
-    for (const auto& corner : markerCorners[i]) {
-      center += corner;
-    }
-    center /= 4.f;
-
-    // Calculate the width of the marker
-    float markerWidth = cv::norm(markerCorners[i][0] - markerCorners[i][1]);
-    std::cout << "Marker " << markerIds[i] << " detected. Width: " << markerWidth << " pixels. Corners: ";
-    std::cout << "Center: " << center << std::endl;
-    pos_in_frame[0] = center.x;
-    pos_in_frame[1] = center.y;
-    pos_in_frame[2] = markerWidth;
-
-
-    // Check if the marker id already exists in the dictionary
-    if (markerSamples.find(markerId) != markerSamples.end()) {
-        // If the marker id exists, add the current sample to the list of samples for this marker id
-        markerSamples[markerId].push_back(pos_in_frame);
-    } else {
-        // If the marker id does not exist, create a new entry in the dictionary with the current marker id and the current sample as the first sample
-        markerSamples[markerId] = {pos_in_frame};
-    }
-
-    float cornerX = markerCorners[i][0].x; // Get the x coordinate of the first corner point of the current marker
-
-    if (cornerX < minCornerX) { // Check if the x coordinate is smaller than the current minimum
-        minCornerX = cornerX; // Update the minimum x coordinate
-        leftMarkerId = markerIds[i]; // Update the left marker id
-    }
-    
-    // aruco_pos = calc_pos3drob(pos_in_frame, aruco_size);
-    // std::cout << "aruco_pos: " << aruco_pos << std::endl;
-    // Draw a circle at the center of the marker
-    cv::circle(frame_ud, center, 3, cv::Scalar(255,0,0));
-  }
 
 }
 
 
-bool UVision::num_samples(int samples){
-  bool status = false;
-  auto it = markerSamples.find(leftMarkerId);
-  std::cout << "Marker HERE"<< std::endl;
-
-  if (it != markerSamples.end()) {
-    std::cout << "Marker HERE"<< std::endl;
-    int numSamples = it->second.size();
-    std::cout << "Marker " << leftMarkerId << " has " << numSamples << " samples." << std::endl;
-    if (numSamples>= samples+10){
-      std::vector<cv::Vec3i> filteredSamples;
-      auto& samples = markerSamples[leftMarkerId];
-      for (const auto& sample : samples) {
-          // Calculate the Euclidean distance between the first and second points
-          float dist = cv::norm(sample[0] - sample[1]);
-          
-          // If the distance is less than the maximum distance, keep the sample
-          if (dist < maxDist_aruco) {
-              filteredSamples.push_back(sample);
-          }
-      }
-
-      cv::Vec3i average(0, 0, 0);
-      for (const auto& sample : filteredSamples) {
-          average += sample;
-      }
-      average /= static_cast<float>(filteredSamples.size());
-      std::cout << "filteredSamples " << filteredSamples.size() << std::endl;
-      if (filteredSamples.size()){
-        status = true;
-
-      }
-    }
-  } else {
-      std::cout << "Marker " << leftMarkerId << " not found in markerSamples map." << std::endl;
-  }
-}
-
-bool UVision::doFindAruco(float seconds)
+bool UVision::doFindAruco(float seconds, int id=-1)
 { // image is in 'frame'
   printf("# GET ARUCO\n");
   markerSamples.clear();
+  int samples_n = 5;
+  bool status = false;
+
+  Ptr<aruco::Dictionary> dictionary = cv::makePtr<aruco::Dictionary>(aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_100));
+  cv::Vec3i pos_in_frame(0, 0, 0);
   leftMarkerId = -1;
   minCornerX = std::numeric_limits<float>::max();
+  // Detect the markers in the image
+  std::vector<int> markerIds;
+  std::vector<std::vector<Point2f>> markerCorners;
 
 
   //releaseBall();
-  cv::Mat1f position(1, 3);
-  position << 1.0f, 0.0f, 0.0f;
+  //cv::Mat1f position(1, 3);
+  //position << 1.0f, 0.0f, 0.0f;
   //move(position);
   //turn_angle(-90);
 
@@ -1084,17 +1073,100 @@ bool UVision::doFindAruco(float seconds)
   //while (t.getTimePassed() < seconds and camIsOpen and not terminate and n<5) {
   while (t.getTimePassed() < seconds and camIsOpen and not terminate) {
     //cap >> image;
-
     getNewestFrame(); 
 
     if (gotFrame){
-      aruco_location();
-      //bool status =  num_samples(10); 
-      // if (status){
+      
+      aruco::detectMarkers(frame_ud, dictionary, markerCorners, markerIds);
+      
+      // Draw the marker outlines on the image
+      aruco::drawDetectedMarkers(frame_ud, markerCorners, markerIds);
 
-      // }
+      for (int i = 0; i < markerIds.size(); i++) {
+        int markerId = markerIds[i];
+        // Calculate the center of the marker
+        cv::Point2f center(0.f, 0.f);
+        for (const auto& corner : markerCorners[i]) {
+          center += corner;
+        }
+        center /= 4.f;
+
+        // Calculate the width of the marker
+        float markerWidth = cv::norm(markerCorners[i][0] - markerCorners[i][1]);
+        std::cout << "Marker " << markerIds[i] << " detected. Width: " << markerWidth << " pixels. Corners: ";
+        std::cout << "Center: " << center << std::endl;
+        pos_in_frame[0] = center.x;
+        pos_in_frame[1] = center.y;
+        pos_in_frame[2] = markerWidth;
 
 
+        // Check if the marker id already exists in the dictionary
+        if (markerSamples.find(markerId) != markerSamples.end()) {
+            // If the marker id exists, add the current sample to the list of samples for this marker id
+            markerSamples[markerId].push_back(pos_in_frame);
+        } else {
+            // If the marker id does not exist, create a new entry in the dictionary with the current marker id and the current sample as the first sample
+            markerSamples[markerId] = {pos_in_frame};
+        }
+
+        float cornerX = markerCorners[i][0].x; // Get the x coordinate of the first corner point of the current marker
+
+        if (id==-1){
+          if (cornerX < minCornerX) { // Check if the x coordinate is smaller than the current minimum
+              minCornerX = cornerX; // Update the minimum x coordinate
+              leftMarkerId = markerIds[i]; // Update the left marker id
+          }
+        }else{
+          leftMarkerId = id;
+        }
+        // aruco_pos = calc_pos3drob(pos_in_frame, aruco_size);
+        // std::cout << "aruco_pos: " << aruco_pos << std::endl;
+        // Draw a circle at the center of the marker
+        cv::circle(frame_ud, center, 10, cv::Scalar(255,0,0));
+      }
+
+
+      if (leftMarkerId > -1){
+        //std::cout << "markerSamples " << markerSamples  << std::endl;
+
+        auto it = markerSamples.find(leftMarkerId);
+        if (it != markerSamples.end()) {
+          int numSamples = it->second.size();
+          std::cout << "Marker " << leftMarkerId << " has " << numSamples << " samples." << std::endl;
+          if (numSamples>= samples_n+5){
+            std::vector<cv::Vec3i> filteredSamples;
+            auto& samples = markerSamples[leftMarkerId];
+            for (const auto& sample : samples) {
+                // Calculate the Euclidean distance between the first and second points
+                float dist = cv::norm(sample[0] - sample[1]);
+                //std::cout << "Distance " << dist << std::endl;
+                
+                // If the distance is less than the maximum distance, keep the sample
+                if (dist < maxDist_aruco) {
+                    filteredSamples.push_back(sample);
+                }
+            }
+
+            for (const auto& sample : filteredSamples) {
+                leftArucoFramePos += sample;
+            }
+            leftArucoFramePos /= static_cast<float>(filteredSamples.size());
+            std::cout << "filteredSamples " << filteredSamples.size() << std::endl;
+            if (filteredSamples.size()>samples_n){
+              status = true;
+
+            }
+          }
+        } else {
+            std::cout << "Marker " << leftMarkerId << " not found in markerSamples map." << std::endl;
+        }
+      } 
+      
+      if (status){
+        std::cout << "leftArucoFramePos " << leftArucoFramePos <<  std::endl;
+        aruco_pos = calc_pos3drob(leftArucoFramePos, aruco_size);
+        std::cout << "aruco_pos " << aruco_pos <<  std::endl;
+      }
 
       // 20 53 6
       if (showImage)
@@ -1103,6 +1175,9 @@ bool UVision::doFindAruco(float seconds)
       }
       if (streaming)
       {
+        //int x = frame_ud.cols / 2;
+        //cv::line(frame_ud, cv::Point(x, 0), cv::Point(x, frame_ud.rows), cv::Scalar(0, 255, 0), 1);
+
         stream();
 
       }
@@ -1110,10 +1185,92 @@ bool UVision::doFindAruco(float seconds)
       waitKey(25);
     }
   }
-  return false;
+  return status;
 }
 
+bool UVision::aruco_mission(float seconds){
+  UTime t;
+  t.now();
+  int n=0;
+  //turn_angle(-90.0, 0.2);
 
+  while(t.getTimePassed() < seconds){
+    bool status = doFindAruco(5);
+    // if (status){
+    //   std::cout << "Marker: "<<  leftMarkerId << " aruco_pos: " << aruco_pos << std::endl;
+    //   float x = aruco_pos.at<float>(0, 0);
+    //   float dist = x - arm_dist - 0.1;
+    //   float theta = 7 * (M_PI/180); // compensation angle
+    //   float y = aruco_pos.at<float>(0, 1);
+    //   y = y + dist*sin(theta) * y/abs(y);
+    //   std::cout << "y " << y <<  std::endl;
+    //   std::cout << "dist " << dist <<  std::endl;
+    // }
+    if (status){
+      std::cout << "Marker: "<<  leftMarkerId << " aruco_pos: " << aruco_pos << std::endl;
+      float x = aruco_pos.at<float>(0, 0);
+      float dist = x - arm_dist - 0.05;
+      float theta = 7 * (M_PI/180); // compensation angle
+      float y = aruco_pos.at<float>(0, 1);
+      y = y - dist*sin(theta) * y/abs(y) + 0.05;
+      std::cout << "y " << y <<  std::endl;
+      std::cout << "dist " << dist <<  std::endl;
+      
+      if (y >= -0.02 && y <= 0.02){
+        
+        std::cout << "Y in interval " << y <<  std::endl;
+        prepareArmAruco();
+        //move(aruco_pos);
+        drive(dist, 0.1);
+        takeAruco();
+        drive(-0.3, -0.1); // reverse #######
+        turn_angle(90, -0.1);
+        drive(0.5, 0.1); // distance to the boxes ##### 
+        turn_angle(-90, 0.1);
+        status = doFindAruco(5, leftMarkerId);
+        if (status){
+          std::cout << "ARUCO HOME FOUND" << aruco_pos <<  std::endl;
+          move(aruco_pos);
+          releaseAruco();
+          //RETURN TO THE ARUCOS INITAL POS
+          move(aruco_pos,"backward");
+          float x = aruco_pos.at<float>(0, 0);
+          float y = aruco_pos.at<float>(0, 1);
+          float angle = atan(y/x)* (180.0 / M_PI);
+          turn_angle(-angle, -0.1);
+
+        }else{
+          std::cout << "ARUCO HOME NOT FOUND" <<  std::endl;
+          turn_angle(90, -0.1);
+          drive(1.0, 0.1); // needs also tunning
+          turn_angle(-90, 0.1);
+          drive(0.8, 0.1); // needs also tunning
+          releaseAruco();
+          drive(-0.8, -0.1);
+
+        }
+          turn_angle(-90, -0.1);
+          //move until find the line
+        
+      }else{
+        std::cout << "Y not in interval " << y <<  std::endl;
+        if (dist<0.01){
+          std::cout << "Small dist " << dist <<  std::endl;
+          drive(-0.2, -0.1);
+        }
+        if (y>0){turn_angle(90, -0.1);}
+        else{turn_angle(-90, -0.1);}
+        drive(y, 0.1);
+        if (y>0){turn_angle(-90, 0.1);}
+        else{turn_angle(90, 0.1);}
+        //drive(dist, 0.1);
+      }
+    }
+
+  }
+
+  return false;
+}
 
 
 //cv::Vec3b yuvOrange = cv::Vec3b(128,88,187);

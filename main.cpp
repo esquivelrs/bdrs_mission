@@ -91,7 +91,7 @@ void moveRobot()
 
 
 void aruco_mission(){
-  bool aruco = vision.doFindAruco(30);
+  bool aruco = vision.aruco_mission(60);
 }
 
 
@@ -123,7 +123,7 @@ int main(int argc, char **argv)
   std::cout << "# Robobot user mission finished ...\n";
   // remember to close camera
   vision.stop();
-  sound.say("I am finished... sorry danish.", 0.2);
+  sound.say("I am finished...", 0.2);
   while (sound.isSaying())
     sleep(1);
   bridge.tx("regbot mute 1\n");

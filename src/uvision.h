@@ -71,7 +71,7 @@ public:
   bool golf_mission();
   /**
    * Stream to screen - if any screen is available */
-  bool doFindAruco(float seconds);
+  bool aruco_mission(float seconds);
   /**
    * Close camera */
   void stop();
@@ -95,12 +95,12 @@ public:
   const int focalLength = 1008;
   const float golfBallDiameter = 0.043; // meter
   const float holeDiameter = 0.28; // meter
-  float arm_dist = 0.38;
+  float arm_dist = 0.37;
   float aruco_size = 0.035;
   /**
    * camera position in robot coordinates (x (forward), y (left), z (up)) */
-  const float camPos[3] = {0.190,0.0, 0.175};       // in meters
-  const float camTilt = 31 * M_PI / 180; // in radians
+  const float camPos[3] = {0.170,0.0, 0.19};       // in meters
+  const float camTilt = 25 * M_PI / 180; // in radians
   cv::Mat1f camToRobot;
 //   const float st = sin(camTilt);
 //   const float ct = cos(camTilt);
@@ -162,11 +162,15 @@ private:
   void move_arround();
   void takeBall();
   void releaseBall();
+  void prepareArmAruco();
+  void takeAruco();
+  void releaseAruco();
   cv::Mat1f calc_pos3drob(cv::Vec3i obj, float diameter);
   bool findfHole();
   cv::Mat1f rotate_translate(cv::Mat1f position, float angle);
   void update_robot_pos(float x, float y, float angle);
-  void turn_angle(int angle);
+  void turn_angle(float angle, float vel);
+  void drive(float dist, float vel);
 
   void go_home();
 
@@ -207,13 +211,22 @@ private:
   int socket_val;
   const int port = 8080;
 
+  bool doFindAruco(float seconds, int id);
   cv::Mat1f aruco_location();
 
   std::map<int, std::vector<cv::Vec3i>> markerSamples;
+  // struct markerSamples {
+  //   int id;
+  //   std::vector<cv::Vec3i> samples;
+  // };
+
+
   float minCornerX; 
   int leftMarkerId; 
-  int maxDist_aruco = 5;
-  bool num_samples(int samples);
+  int maxDist_aruco = 1000;
+  cv::Vec3i leftArucoFramePos;
+  cv::Mat1f aruco_pos;
+  
 
 
   
