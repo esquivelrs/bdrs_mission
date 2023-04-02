@@ -39,13 +39,21 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <map>
+#include <arpa/inet.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
+
+
 using namespace std;
 using namespace cv;
 
 // create the vision object
 UVision vision;
 
-#define PORT 8080
+
+Ptr<aruco::Dictionary> dictionary = cv::makePtr<aruco::Dictionary>(aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_100));
+
+
 
 
 // class implementation:
@@ -143,51 +151,54 @@ void UVision::setup(int argc, char **argv)
   std::cout << "Camera matrix: " << std::endl << camera_matrix << std::endl;
   std::cout << "Distortion coefficients: " << std::endl << dist_coeffs << std::endl;
 
+
   if (streaming){
+    int localSocket, remoteSocket, reuseaddr = 1;
+    struct sockaddr_in localAddr, remoteAddr;
+    int addrLen = sizeof(struct sockaddr_in);
 
-    std::cout << "CONNECTION SETUP!!!"  << std::endl;
 
-    int server_fd, opt = 1;
-    struct sockaddr_in address;
-    int addrlen = sizeof(address);
 
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
-        std::cerr << "socket failed"<< std::endl;
-        exit(EXIT_FAILURE);
+    localSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (localSocket == -1)
+    {
+        perror("socket() call failed!!");
+        exit(1);
     }
 
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
-        std::cerr << "setsockopt"<< std::endl;
-        exit(EXIT_FAILURE);
+    if (setsockopt(localSocket, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof(int)) == -1)
+    {
+        perror("setsockopt");
+        exit(1);
     }
 
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = htonl(INADDR_ANY);
-    address.sin_port = htons(PORT);
+    localAddr.sin_family = AF_INET;
+    localAddr.sin_addr.s_addr = INADDR_ANY;
+    localAddr.sin_port = htons(port);
 
-    std::cout << "CONNECTION33!!!"  << std::endl;
-    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
-        std::cerr << "bind failed"<< std::endl;
-        exit(EXIT_FAILURE);
+    if (bind(localSocket, (struct sockaddr *)&localAddr, sizeof(localAddr)) < 0)
+    {
+        perror("Can't bind() socket");
+        exit(1);
     }
 
-    std::cout << "CONNECTION44!!!"  << std::endl;
-    if (listen(server_fd, 3) < 0) {
-        std::cerr << "listen"<< std::endl;
-        exit(EXIT_FAILURE);
+    listen(localSocket, 3);
+
+    std::cout << "Waiting for connections...\n"
+              << "Server Port:" << port << std::endl;
+
+    while (1)
+    {
+        remoteSocket = accept(localSocket, (struct sockaddr *)&remoteAddr, (socklen_t *)&addrLen);
+        if (remoteSocket < 0)
+        {
+            perror("accept failed!");
+            exit(1);
+        }
+        std::cout << "Connection accepted" << std::endl;
+        socket_val = remoteSocket;
+        break;
     }
-
-    std::cout << "CONNECTION55!!!"  << std::endl;
-
-    if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
-        std::cerr << "accept"<< std::endl;
-        exit(EXIT_FAILURE);
-    }
-    std::cout << "CONNECTION66!!!"  << std::endl;
-
-    close(server_fd);
-
-    std::cout << "CONNECTION!!!"  << std::endl;
 
 
   }
@@ -237,6 +248,26 @@ void UVision::loop()
       // just grab the image - mark it as used
       cap.grab();
     frameSerial++;
+  }
+}
+
+void UVision::stream(){
+  // send processed image
+  Mat img, imgGray;
+  img = Mat::zeros(720, 1280, CV_8UC1);
+
+  cvtColor(frame_ud, imgGray, COLOR_BGR2GRAY);
+
+  int imgSize = imgGray.total() * imgGray.elemSize();
+  int bytes = 0;
+  //int imgSize = frame.total() * frame.elemSize();
+  if ((bytes = send(socket_val, imgGray.data, imgSize, 0)) < 0)
+  {
+      close(socket_val);
+      std::cerr << "bytes = " << bytes << std::endl;
+      
+      exit(1);
+      //break;
   }
 }
 
@@ -557,22 +588,10 @@ bool UVision::loopFrames(float seconds, string obj, string mode)
         //imshow("RAW", frame);
 
       }
-      if (streaming){
-        int imgSize = frame_ud.total() * frame_ud.elemSize();
-        uchar* img = frame_ud.data;
-        int n = 0, len = 0;
-        while (len < imgSize) {
-            n = send(new_socket, img + len, imgSize - len, 0);
-            if (n == -1) {
-                cerr << "ERROR: Send failed" << endl;
-                break;
-            }
-            len += n;
-        }
-        if (len == -1) {
-            break;
-        }
-
+      
+      if (streaming)
+      {
+        stream();
 
       }
       
@@ -603,7 +622,7 @@ bool UVision::loopFrames(float seconds, string obj, string mode)
   cout << "Mean: " << objPossition << std::endl;
   cout << "Samples " << filteredSamples.size() << std::endl;
 
-  if (filteredSamples.size()>5){
+  if (filteredSamples.size()>12){
     cout << "FOUND "<< obj << std::endl;
     
     return true;
@@ -843,6 +862,26 @@ void UVision::releaseBall(){
 
 }
 
+void UVision::turn_angle(int angle){
+  const int MSL = 200;
+  char s[MSL];
+  sound.say("HOME", 0.3);
+  bridge.tx("regbot mclear\n");
+  event.clearEvents();
+
+  bridge.tx("regbot madd vel=0.0, log=3.0: time=0.02\n");
+
+  snprintf(s,MSL,"regbot madd vel=%.2f,tr=0.2:turn=%.1f\n", 0.2, angle);
+  bridge.tx(s);
+  std::cout << s << std::endl;
+  bridge.tx("regbot madd vel=0.0: time=0.02\n");
+
+  bridge.tx("regbot start\n");
+  cout << "Taking a ball...\n";
+  event.waitForEvent(0); 
+
+}
+
 void UVision::move_arround(){
   move_arround_dir = -1*move_arround_dir;
 
@@ -868,7 +907,7 @@ bool UVision::golf_mission(){
   addBoundaryPoint(0.0, -3.0);
   addBoundaryPoint(5.0, -3.0);
   releaseBall();
-  while(n<3 and t.getTimePassed() < 20){
+  while(n<3 and t.getTimePassed() < 180){
   //while(n<6){
     bool res = false;
     res = loopFrames(20, "BALL", "GROSS");
@@ -922,10 +961,113 @@ bool UVision::golf_mission(){
   return true;
 }
 
+cv::Mat1f UVision::aruco_location(){
+  
+  cv::Vec3i pos_in_frame(0, 0, 0);
+  cv::Mat1f aruco_pos;
+
+  // Detect the markers in the image
+  std::vector<int> markerIds;
+  std::vector<std::vector<Point2f>> markerCorners;
+  aruco::detectMarkers(frame_ud, dictionary, markerCorners, markerIds);
+  
+  // Draw the marker outlines on the image
+  aruco::drawDetectedMarkers(frame_ud, markerCorners, markerIds);
+
+  for (int i = 0; i < markerIds.size(); i++) {
+    int markerId = markerIds[i];
+    // Calculate the center of the marker
+    cv::Point2f center(0.f, 0.f);
+    for (const auto& corner : markerCorners[i]) {
+      center += corner;
+    }
+    center /= 4.f;
+
+    // Calculate the width of the marker
+    float markerWidth = cv::norm(markerCorners[i][0] - markerCorners[i][1]);
+    std::cout << "Marker " << markerIds[i] << " detected. Width: " << markerWidth << " pixels. Corners: ";
+    std::cout << "Center: " << center << std::endl;
+    pos_in_frame[0] = center.x;
+    pos_in_frame[1] = center.y;
+    pos_in_frame[2] = markerWidth;
+
+
+    // Check if the marker id already exists in the dictionary
+    if (markerSamples.find(markerId) != markerSamples.end()) {
+        // If the marker id exists, add the current sample to the list of samples for this marker id
+        markerSamples[markerId].push_back(pos_in_frame);
+    } else {
+        // If the marker id does not exist, create a new entry in the dictionary with the current marker id and the current sample as the first sample
+        markerSamples[markerId] = {pos_in_frame};
+    }
+
+    float cornerX = markerCorners[i][0].x; // Get the x coordinate of the first corner point of the current marker
+
+    if (cornerX < minCornerX) { // Check if the x coordinate is smaller than the current minimum
+        minCornerX = cornerX; // Update the minimum x coordinate
+        leftMarkerId = markerIds[i]; // Update the left marker id
+    }
+    
+    // aruco_pos = calc_pos3drob(pos_in_frame, aruco_size);
+    // std::cout << "aruco_pos: " << aruco_pos << std::endl;
+    // Draw a circle at the center of the marker
+    cv::circle(frame_ud, center, 3, cv::Scalar(255,0,0));
+  }
+
+}
+
+
+bool UVision::num_samples(int samples){
+  bool status = false;
+  auto it = markerSamples.find(leftMarkerId);
+  std::cout << "Marker HERE"<< std::endl;
+
+  if (it != markerSamples.end()) {
+    std::cout << "Marker HERE"<< std::endl;
+    int numSamples = it->second.size();
+    std::cout << "Marker " << leftMarkerId << " has " << numSamples << " samples." << std::endl;
+    if (numSamples>= samples+10){
+      std::vector<cv::Vec3i> filteredSamples;
+      auto& samples = markerSamples[leftMarkerId];
+      for (const auto& sample : samples) {
+          // Calculate the Euclidean distance between the first and second points
+          float dist = cv::norm(sample[0] - sample[1]);
+          
+          // If the distance is less than the maximum distance, keep the sample
+          if (dist < maxDist_aruco) {
+              filteredSamples.push_back(sample);
+          }
+      }
+
+      cv::Vec3i average(0, 0, 0);
+      for (const auto& sample : filteredSamples) {
+          average += sample;
+      }
+      average /= static_cast<float>(filteredSamples.size());
+      std::cout << "filteredSamples " << filteredSamples.size() << std::endl;
+      if (filteredSamples.size()){
+        status = true;
+
+      }
+    }
+  } else {
+      std::cout << "Marker " << leftMarkerId << " not found in markerSamples map." << std::endl;
+  }
+}
 
 bool UVision::doFindAruco(float seconds)
 { // image is in 'frame'
   printf("# GET ARUCO\n");
+  markerSamples.clear();
+  leftMarkerId = -1;
+  minCornerX = std::numeric_limits<float>::max();
+
+
+  //releaseBall();
+  cv::Mat1f position(1, 3);
+  position << 1.0f, 0.0f, 0.0f;
+  //move(position);
+  //turn_angle(-90);
 
   UTime t;
   t.now();
@@ -937,9 +1079,7 @@ bool UVision::doFindAruco(float seconds)
   }
 
   t.now();
-  Ptr<aruco::Dictionary> dictionary = cv::makePtr<aruco::Dictionary>(aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_100));
-
-
+  
 
   //while (t.getTimePassed() < seconds and camIsOpen and not terminate and n<5) {
   while (t.getTimePassed() < seconds and camIsOpen and not terminate) {
@@ -948,24 +1088,23 @@ bool UVision::doFindAruco(float seconds)
     getNewestFrame(); 
 
     if (gotFrame){
-      
-      Mat markerImage;
-      // Load the predefined dictionary
-      //Ptr<cv::aruco::Dictionary> dictionary = aruco::getPredefinedDictionary(cv::aruco::DICT_5X5_100);
-      //cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_250);
+      aruco_location();
+      //bool status =  num_samples(10); 
+      // if (status){
 
-          
-      // Detect the markers in the image
-      std::vector<int> markerIds;
-      std::vector<std::vector<Point2f>> markerCorners;
-      aruco::detectMarkers(frame, dictionary, markerCorners, markerIds);
-      
-      // Draw the marker outlines on the image
-      aruco::drawDetectedMarkers(frame, markerCorners, markerIds);
+      // }
 
+
+
+      // 20 53 6
       if (showImage)
       {
-        imshow("ARUCO", frame);
+        imshow("ARUCO", frame_ud);
+      }
+      if (streaming)
+      {
+        stream();
+
       }
 
       waitKey(25);

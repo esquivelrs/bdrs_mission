@@ -43,6 +43,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <opencv2/aruco.hpp>
+#include <opencv2/core/core.hpp>
 
 #include <opencv2/core.hpp>
 #include <opencv2/videoio.hpp>
@@ -92,8 +94,9 @@ public:
    * focal length for Sandberg camera in pixels */
   const int focalLength = 1008;
   const float golfBallDiameter = 0.043; // meter
-  const float holeDiameter = 0.27; // meter
-  float arm_dist = 0.39;
+  const float holeDiameter = 0.28; // meter
+  float arm_dist = 0.38;
+  float aruco_size = 0.035;
   /**
    * camera position in robot coordinates (x (forward), y (left), z (up)) */
   const float camPos[3] = {0.190,0.0, 0.175};       // in meters
@@ -163,7 +166,7 @@ private:
   bool findfHole();
   cv::Mat1f rotate_translate(cv::Mat1f position, float angle);
   void update_robot_pos(float x, float y, float angle);
-
+  void turn_angle(int angle);
 
   void go_home();
 
@@ -199,6 +202,20 @@ private:
 
   float distanceThreshold = 0.05;
   int move_arround_dir;
+
+  void stream();
+  int socket_val;
+  const int port = 8080;
+
+  cv::Mat1f aruco_location();
+
+  std::map<int, std::vector<cv::Vec3i>> markerSamples;
+  float minCornerX; 
+  int leftMarkerId; 
+  int maxDist_aruco = 5;
+  bool num_samples(int samples);
+
+
   
 };
 

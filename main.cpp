@@ -106,11 +106,11 @@ int main(int argc, char **argv)
   //step1();
   //step2();
   //vision.processImage(60);
-  bool golf_mission_i = true;
+  bool golf_mission_i = false;
   if (golf_mission_i){
     vision.golf_mission();
   }
-  bool aruco_mission_i = false;
+  bool aruco_mission_i = true;
   if (aruco_mission_i){
     aruco_mission();
   }
