@@ -95,12 +95,12 @@ public:
   const int focalLength = 1008;
   const float golfBallDiameter = 0.043; // meter
   const float holeDiameter = 0.28; // meter
-  float arm_dist = 0.37;
+  float arm_dist = 0.40;
   float aruco_size = 0.035;
   /**
    * camera position in robot coordinates (x (forward), y (left), z (up)) */
-  const float camPos[3] = {0.170,0.0, 0.19};       // in meters
-  const float camTilt = 25 * M_PI / 180; // in radians
+  const float camPos[3] = {0.140,0.0, 0.205};       // in meters
+  const float camTilt = 23 * M_PI / 180; // in radians
   cv::Mat1f camToRobot;
 //   const float st = sin(camTilt);
 //   const float ct = cos(camTilt);
@@ -116,6 +116,8 @@ public:
 private:
   /// buffer for captured image
   cv::Mat frame, frame_ud;
+  const int MSL = 200;
+  char s[200];
   cv::Mat camera_matrix, dist_coeffs;
   /// openCV video capture function
   cv::VideoCapture cap;
@@ -171,6 +173,8 @@ private:
   void update_robot_pos(float x, float y, float angle);
   void turn_angle(float angle, float vel);
   void drive(float dist, float vel);
+  void goto_aruco_area();
+  void execute_instruction(string instruction);
 
   void go_home();
 
@@ -223,7 +227,7 @@ private:
 
   float minCornerX; 
   int leftMarkerId; 
-  int maxDist_aruco = 1000;
+  int maxDist_aruco = 2;
   cv::Vec3i leftArucoFramePos;
   cv::Mat1f aruco_pos;
   
