@@ -31,6 +31,7 @@
 #include "ustate.h"
 #include "uvision.h"
 #include "uevent.h"
+#include "uencoder.h"
 
 // create the bridge connection
 UBridge bridge;
@@ -42,6 +43,7 @@ void UBridge::decode(char* msg)
   else if (pose.decode(msg)) {}
   else if (state.decode(msg)) {}
   else if (event.decode(msg)) {}
+  else if (enc.decode(msg)) {}
   else
     printf("Received, but not used: %s\n", msg);
 }

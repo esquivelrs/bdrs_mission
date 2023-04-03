@@ -31,6 +31,7 @@
 #include "src/ustate.h"
 #include "src/uplay.h"
 #include "src/uevent.h"
+#include "src/uencoder.h"
 
 using namespace std;
 
@@ -54,6 +55,7 @@ void setup(int argc, char **argv)
     state.setup();
     vision.setup(argc, argv);
     event.setup();
+    enc.setup();
     sound.say("Set up complete", 0.2);
     printf("# Set up complete OK\n");
   }
@@ -583,6 +585,18 @@ void goalSequence()
 {
   uTurn();
   goal();
+}
+
+
+void patrolSequence()
+{
+  while (not event.gotEvent(0))
+  {
+    str::cout <<"encoder1:" << enc.e3 << endl;
+    str::cout <<"encoder2:" << enc.e4 << endl;
+    usleep(10000);
+  } 
+  event.waitForevent(0);
 }
 
 int main(int argc, char **argv)
