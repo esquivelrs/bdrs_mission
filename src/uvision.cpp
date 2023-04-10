@@ -1251,7 +1251,7 @@ bool UVision::doFindAruco(float seconds, int id=-1)
   if (status){
     std::cout << "leftArucoFramePos " << leftArucoFramePos <<  std::endl;
     aruco_pos = calc_pos3drob(leftArucoFramePos, aruco_size);
-    //aruco_pos(0, 0) = aruco_pos.at<float>(0, 0) - 0.03;
+    aruco_pos(0, 0) = aruco_pos.at<float>(0, 0) - 0.03;
     //aruco_pos(0, 1) = aruco_pos.at<float>(0, 1) + 0.015;
 
     std::cout << "aruco_pos " << aruco_pos <<  std::endl;
@@ -1372,7 +1372,7 @@ bool UVision::aruco_mission(float seconds){
         inst = "regbot madd vel=0.1,edger=0.0,white=1: lv<3,dist=0.10\n";
         execute_instruction(inst);
 
-        inst = "regbot madd vel=-0.2: dist=-0.30\n";
+        inst = "regbot madd vel=-0.2: dist=-0.15\n";
         execute_instruction(inst);
           
           //move until find the line
