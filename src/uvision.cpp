@@ -1251,10 +1251,11 @@ bool UVision::doFindAruco(float seconds, int id=-1)
   if (status){
     std::cout << "leftArucoFramePos " << leftArucoFramePos <<  std::endl;
     aruco_pos = calc_pos3drob(leftArucoFramePos, aruco_size);
+    //aruco_pos(0, 0) = aruco_pos.at<float>(0, 0) - 0.03;
+    //aruco_pos(0, 1) = aruco_pos.at<float>(0, 1) + 0.015;
+
     std::cout << "aruco_pos " << aruco_pos <<  std::endl;
   }
-
-
 
   return status;
 }
@@ -1290,9 +1291,9 @@ bool UVision::aruco_mission(float seconds){
     if (status){
       std::cout << "Marker: "<<  leftMarkerId << " aruco_pos: " << aruco_pos << std::endl;
       float x = aruco_pos.at<float>(0, 0);
-      float dist = x - arm_dist - 0.03; //- 0.05;
+      float dist = x - arm_dist; //- 0.05;
       //float theta = 7 * (M_PI/180); // compensation angle can be removed(it is to compensate the error related to the distances of the object)
-      float y = aruco_pos.at<float>(0, 1) + 0.015; // 0.01 is the offset of the arm
+      float y = aruco_pos.at<float>(0, 1); // 0.01 is the offset of the arm
       //y = y - dist*sin(theta) * y/abs(y) + 0.05; //  compensation of the error - dist*sin(theta) * y/abs(y) + 0.05
       std::cout << "y " << y <<  std::endl;
       std::cout << "dist " << dist <<  std::endl;
@@ -1305,11 +1306,11 @@ bool UVision::aruco_mission(float seconds){
         std::cout << "Y in interval " << y <<  std::endl;
         prepareArmAruco();
 
-        float angle = atan(y/dist)* (180.0 / M_PI);
-        turn_angle(-angle, 0.1);
+        //float angle = atan(y/dist)* (180.0 / M_PI);
+        //turn_angle(-angle, 0.1);
 
-        //move(aruco_pos);
-        drive(dist, 0.1);
+        move(aruco_pos);
+        //drive(dist, 0.1);
         takeAruco();
           
         
