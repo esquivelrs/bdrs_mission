@@ -723,10 +723,10 @@ void UVision::move(cv::Mat1f position, string mode="MOVING"){
   double degrees = radians * (180.0 / M_PI);
   float dist = sqrt(pow(position.at<float>(0, 1),2) + pow(position.at<float>(0, 0),2)) - arm_dist;
 
-  float vel = 0.2;
+  float vel = 0.1;
   if (mode=="backward"){
     dist = -dist;
-    vel = -0.2;
+    vel = -0.1;
     degrees = 0; 
   }
 
@@ -748,7 +748,7 @@ void UVision::move(cv::Mat1f position, string mode="MOVING"){
 
     bridge.tx("regbot madd vel=0.0, log=3.0: time=0.02\n");
 
-    snprintf(s,MSL,"regbot madd vel=%.2f,tr=0.0:turn=%.1f\n", 0.2, degrees);
+    snprintf(s,MSL,"regbot madd vel=%.2f,tr=0.0:turn=%.1f\n", 0.1, degrees);
     bridge.tx(s);
     std::cout << s << std::endl;
 
@@ -868,7 +868,7 @@ void UVision::prepareArmAruco(){
   event.clearEvents();
   //usleep(2000);
  
-  bridge.tx("regbot madd servo=1,pservo=-100,vservo=120:time=8\n");
+  bridge.tx("regbot madd servo=1,pservo=50,vservo=120:time=8\n");
   bridge.tx("regbot madd servo=2,pservo=250:time=2\n");
 
   bridge.tx("regbot start\n");
@@ -884,7 +884,7 @@ void UVision::takeAruco(){
   event.clearEvents();
   //usleep(2000);
  
-  //bridge.tx("regbot madd servo=2,pservo=-600:time=2\n");
+  bridge.tx("regbot madd servo=2,pservo=-400:time=2\n");
   bridge.tx("regbot madd servo=1,pservo=600,vservo=120:time=8\n");
 
   bridge.tx("regbot start\n");
@@ -900,7 +900,7 @@ void UVision::releaseAruco(){
   event.clearEvents();
   //usleep(2000);
  
-  bridge.tx("regbot madd servo=1,pservo=-100,vservo=120:time=8\n");
+  bridge.tx("regbot madd servo=1,pservo=50,vservo=120:time=8\n");
   bridge.tx("regbot madd servo=2,pservo=250:time=2\n");
 
   bridge.tx("regbot start\n");
@@ -908,7 +908,7 @@ void UVision::releaseAruco(){
   event.waitForEvent(0); 
 }
 
-void UVision::turn_angle(float angle, float vel){
+void UVision::turn_angle(float angle, float vel, float tr = 0.0){
   const int MSL = 200;
   char s[MSL];
   sound.say("HOME", 0.3);
@@ -917,7 +917,7 @@ void UVision::turn_angle(float angle, float vel){
 
   bridge.tx("regbot madd vel=0.0, log=3.0: time=0.02\n");
 
-  snprintf(s,MSL,"regbot madd vel=%.2f,tr=0.0:turn=%.2f\n", vel, angle);
+  snprintf(s,MSL,"regbot madd vel=%.2f,tr=%.2f:turn=%.2f\n", vel,tr, angle);
   bridge.tx(s);
   std::cout << s << std::endl;
   bridge.tx("regbot madd vel=0.0: time=0.08\n");
@@ -942,11 +942,11 @@ void UVision::goto_aruco_area(){
   bridge.tx("regbot madd vel=0.2: dist=0.5\n");
   bridge.tx("regbot madd vel=0.2, tr=0.1: turn=-90\n"); 
   bridge.tx("regbot madd vel=0.2: xl>16\n");
-  bridge.tx("regbot madd vel=0.2, tr=0.1: turn=-90\n"); 
-  bridge.tx("regbot madd vel=0.2,edger=0.0,white=1: lv<3,xl>16\n");
-  bridge.tx("regbot madd vel=0.2, tr=0.1: turn=-90\n"); 
-  bridge.tx("regbot madd vel=0.2,edger=0.0,white=1: lv<3,dist=0.5\n");
-  bridge.tx("regbot madd vel=-0.2: dist=-0.40\n"); 
+  bridge.tx("regbot madd vel=0.1, tr=0.1: turn=-90\n"); 
+  bridge.tx("regbot madd vel=0.1,edger=0.0,white=1: lv<3,xl>16\n");
+  bridge.tx("regbot madd vel=0.1, tr=0.1: turn=-90\n"); 
+  bridge.tx("regbot madd vel=0.1,edger=0.0,white=1: lv<3,dist=0.15\n");
+  bridge.tx("regbot madd vel=-0.2: dist=-0.30\n"); 
   bridge.tx("regbot madd vel=0.0:time=0.8\n");
 
   bridge.tx("regbot start\n");
@@ -1261,32 +1261,16 @@ bool UVision::doFindAruco(float seconds, int id=-1)
 
 bool UVision::aruco_mission(float seconds){
   UTime t;
-  t.now();
-  int n=0;
-  string inst;
 
   //turn_angle(-90.0, 0.2);
   goto_aruco_area();
 
-
-
-
+  t.now();
+  int n=0;
+  string inst;
 
   while(t.getTimePassed() < seconds){ // add number of completed arucos
-    bool status = doFindAruco(10);
-    if (status){
-      std::cout << "Marker: "<<  leftMarkerId << " aruco_pos: " << aruco_pos << std::endl;
-      float x = aruco_pos.at<float>(0, 0);
-      float dist = x - arm_dist; //- 0.05;
-      //float theta = 7 * (M_PI/180); // compensation angle can be removed(it is to compensate the error related to the distances of the object)
-      float y = aruco_pos.at<float>(0, 1) + 0.025; // 0.01 is the offset of the arm
-      //y = y - dist*sin(theta) * y/abs(y) + 0.05; //  compensation of the error - dist*sin(theta) * y/abs(y) + 0.05
-      std::cout << "y " << y <<  std::endl;
-      std::cout << "dist " << dist <<  std::endl;
-
-    }
-    
-    
+    bool status = doFindAruco(15);
     if (false){
       std::cout << "Marker: "<<  leftMarkerId << " aruco_pos: " << aruco_pos << std::endl;
       float x = aruco_pos.at<float>(0, 0);
@@ -1298,25 +1282,48 @@ bool UVision::aruco_mission(float seconds){
       std::cout << "dist " << dist <<  std::endl;
       
 
+    }
+    // prepareArmAruco();
+    // takeAruco();
+    
+    
+    if (status){
+      std::cout << "Marker: "<<  leftMarkerId << " aruco_pos: " << aruco_pos << std::endl;
+      float x = aruco_pos.at<float>(0, 0);
+      float dist = x - arm_dist - 0.03; //- 0.05;
+      //float theta = 7 * (M_PI/180); // compensation angle can be removed(it is to compensate the error related to the distances of the object)
+      float y = aruco_pos.at<float>(0, 1) + 0.015; // 0.01 is the offset of the arm
+      //y = y - dist*sin(theta) * y/abs(y) + 0.05; //  compensation of the error - dist*sin(theta) * y/abs(y) + 0.05
+      std::cout << "y " << y <<  std::endl;
+      std::cout << "dist " << dist <<  std::endl;
+      
+
       
       //if (y >= -0.04 && y <= 0.04){
       if (true){
         
         std::cout << "Y in interval " << y <<  std::endl;
         prepareArmAruco();
-        move(aruco_pos);
-        //drive(dist, 0.1);
+
+        float angle = atan(y/dist)* (180.0 / M_PI);
+        turn_angle(-angle, 0.1);
+
+        //move(aruco_pos);
+        drive(dist, 0.1);
         takeAruco();
           
         
-        drive(-0.8, -0.1);
-        inst = "regbot madd vel=0.2: lv>3,xl>16\n";
+        //drive(-0.8, -0.1);
+        inst = "regbot madd vel=-0.2: xl>16\n";
         execute_instruction(inst);
         drive(-0.8, -0.1);
         turn_angle(90, 0.1);
-        status = doFindAruco(10, leftMarkerId);
+        drive(-0.2, -0.1);
+        status = doFindAruco(15, leftMarkerId);
         if (status){
           std::cout << "ARUCO HOME FOUND" << aruco_pos <<  std::endl;
+
+          drive(-0.1, -0.1);
           move(aruco_pos);
           //drive(0.3, 0.1);
           releaseAruco();
@@ -1326,22 +1333,46 @@ bool UVision::aruco_mission(float seconds){
           float x = aruco_pos.at<float>(0, 0);
           float y = aruco_pos.at<float>(0, 1);
           float angle = atan(y/x)* (180.0 / M_PI);
-          turn_angle(-angle, -0.1);
+          turn_angle(-angle, 0.1);
 
         }else{
           std::cout << "ARUCO HOME NOT FOUND" <<  std::endl;
-          turn_angle(90, -0.1);
-          drive(1.0, 0.1); // needs also tunning
+          turn_angle(90, 0.1);
+          drive(0.70, 0.1); // needs also tunning
           turn_angle(-90, 0.1);
-          drive(0.8, 0.1); // needs also tunning
+          drive(0.4, 0.1); // needs also tunning
           releaseAruco();
-          drive(-0.8, -0.1);
+          drive(-0.4, -0.1);
 
         }
-          drive(-0.3, -0.1);
-          turn_angle(-90, 0.1);
-          inst = "regbot madd vel=0.2: lv>3,xl>16\n";
-          execute_instruction(inst);
+        drive(-0.3, -0.1);
+        turn_angle(-90, 0.1);
+        inst = "regbot madd vel=0.2: lv>3,xl>16\n";
+        execute_instruction(inst);
+
+// bridge.tx("regbot madd vel=0.2: xl>16\n");
+// bridge.tx("regbot madd vel=0.1, tr=0.1: turn=-90\n"); 
+// bridge.tx("regbot madd vel=0.1,edger=0.0,white=1: lv<3,xl>16\n");
+// bridge.tx("regbot madd vel=0.1, tr=0.1: turn=-90\n"); 
+// bridge.tx("regbot madd vel=0.1,edger=0.0,white=1: lv<3,dist=0.15\n");
+
+        bridge.tx("regbot madd servo=1,pservo=600,vservo=120:time=6\n");
+        
+        inst = "regbot madd servo=1,pservo=600,vservo=120:time=6\n";
+        execute_instruction(inst);
+        inst = "regbot madd vel=0.2: lv>3,xl>16\n";
+        execute_instruction(inst);
+        inst = "regbot madd vel=0.1, tr=0.1: turn=90\n";
+        execute_instruction(inst);
+        inst = "regbot madd vel=0.1,edger=0.0,white=1: lv<3,xl>16\n";
+        execute_instruction(inst);
+        inst = "regbot madd vel=0.1, tr=0.1: turn=-90\n";
+        execute_instruction(inst);
+        inst = "regbot madd vel=0.1,edger=0.0,white=1: lv<3,dist=0.10\n";
+        execute_instruction(inst);
+
+        inst = "regbot madd vel=-0.2: dist=-0.30\n";
+        execute_instruction(inst);
           
           //move until find the line
         

@@ -171,7 +171,7 @@ private:
   bool findfHole();
   cv::Mat1f rotate_translate(cv::Mat1f position, float angle);
   void update_robot_pos(float x, float y, float angle);
-  void turn_angle(float angle, float vel);
+  void turn_angle(float angle, float vel, float tr);
   void drive(float dist, float vel);
   void goto_aruco_area();
   void execute_instruction(string instruction);
