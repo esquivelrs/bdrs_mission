@@ -91,7 +91,7 @@ void moveRobot()
 
 
 void aruco_mission(){
-  bool aruco = vision.aruco_mission(480);
+  bool aruco = vision.aruco_mission(560);
 }
 
 

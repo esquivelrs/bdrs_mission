@@ -869,7 +869,7 @@ void UVision::prepareArmAruco(){
   //usleep(2000);
  
   bridge.tx("regbot madd servo=1,pservo=50,vservo=120:time=8\n");
-  bridge.tx("regbot madd servo=2,pservo=250:time=2\n");
+  bridge.tx("regbot madd servo=2,pservo=325:time=2\n");
 
   bridge.tx("regbot start\n");
   cout << "prepare arm...\n";
@@ -884,7 +884,7 @@ void UVision::takeAruco(){
   event.clearEvents();
   //usleep(2000);
  
-  bridge.tx("regbot madd servo=2,pservo=-400:time=2\n");
+  bridge.tx("regbot madd servo=2,pservo=-500:time=2\n");
   bridge.tx("regbot madd servo=1,pservo=600,vservo=120:time=8\n");
 
   bridge.tx("regbot start\n");
@@ -901,7 +901,7 @@ void UVision::releaseAruco(){
   //usleep(2000);
  
   bridge.tx("regbot madd servo=1,pservo=50,vservo=120:time=8\n");
-  bridge.tx("regbot madd servo=2,pservo=250:time=2\n");
+  bridge.tx("regbot madd servo=2,pservo=325:time=2\n");
 
   bridge.tx("regbot start\n");
   cout << "Release Aruco...\n";
@@ -934,10 +934,8 @@ void UVision::goto_aruco_area(){
   event.clearEvents();
 
   bridge.tx("regbot madd vel=0.0, log=3.0: time=0.02\n");
-
   bridge.tx("regbot madd servo=1,pservo=600,vservo=120:time=6\n");
-  bridge.tx("regbot madd vel=0.2: dist=0.1\n");
-  bridge.tx("regbot madd vel=0.2: lv=20,dist=0.5\n");
+  bridge.tx("regbot madd vel=0.2,edger=0.0,white=1:dist=1.0\n");
   bridge.tx("regbot madd vel=0.2,edger=0.0,white=1: lv<3,xl>16\n");
   bridge.tx("regbot madd vel=0.2: dist=0.5\n");
   bridge.tx("regbot madd vel=0.2, tr=0.1: turn=-90\n"); 
@@ -946,7 +944,8 @@ void UVision::goto_aruco_area(){
   bridge.tx("regbot madd vel=0.1,edger=0.0,white=1: lv<3,xl>16\n");
   bridge.tx("regbot madd vel=0.1, tr=0.1: turn=-90\n"); 
   bridge.tx("regbot madd vel=0.1,edger=0.0,white=1: lv<3,dist=0.15\n");
-  bridge.tx("regbot madd vel=-0.2: dist=-0.30\n"); 
+  bridge.tx("regbot madd vel=-0.2: dist=-0.60\n"); 
+  bridge.tx("regbot madd vel=0.2: dist=0.20\n"); 
   bridge.tx("regbot madd vel=0.0:time=0.8\n");
 
   bridge.tx("regbot start\n");
@@ -1251,7 +1250,7 @@ bool UVision::doFindAruco(float seconds, int id=-1)
   if (status){
     std::cout << "leftArucoFramePos " << leftArucoFramePos <<  std::endl;
     aruco_pos = calc_pos3drob(leftArucoFramePos, aruco_size);
-    aruco_pos(0, 0) = aruco_pos.at<float>(0, 0) - 0.03;
+    aruco_pos(0, 0) = aruco_pos.at<float>(0, 0) - 0.02;
     //aruco_pos(0, 1) = aruco_pos.at<float>(0, 1) + 0.015;
 
     std::cout << "aruco_pos " << aruco_pos <<  std::endl;
@@ -1270,7 +1269,7 @@ bool UVision::aruco_mission(float seconds){
   int n=0;
   string inst;
 
-  while(t.getTimePassed() < seconds){ // add number of completed arucos
+  while(t.getTimePassed() < seconds and n<4){ // add number of completed arucos
     bool status = doFindAruco(15);
     if (false){
       std::cout << "Marker: "<<  leftMarkerId << " aruco_pos: " << aruco_pos << std::endl;
@@ -1309,7 +1308,11 @@ bool UVision::aruco_mission(float seconds){
         //float angle = atan(y/dist)* (180.0 / M_PI);
         //turn_angle(-angle, 0.1);
 
-        move(aruco_pos);
+        //move(aruco_pos);
+
+        inst = "regbot madd vel=0.1,edger=0.0,white=1:dist=" + std::to_string(dist) + "\n";
+        execute_instruction(inst);
+
         //drive(dist, 0.1);
         takeAruco();
           
@@ -1324,8 +1327,17 @@ bool UVision::aruco_mission(float seconds){
         if (status){
           std::cout << "ARUCO HOME FOUND" << aruco_pos <<  std::endl;
 
-          drive(-0.1, -0.1);
+          drive(-0.05, -0.1);
+
+
+          inst = "regbot ctrn 1 1 1 1 9999.99 1 1 1 1 1 1 1 1 1 1 0 1 9999.99 1 0 1 0 1 1 1 9999.99\n";
+          execute_instruction(inst);
+
           move(aruco_pos);
+
+          inst = "regbot ctrn 0 1 0 1 9999.99 1 0 1 1 0 1 1 0 1 1 0 1 9999.99 1 0 1 0 1 1 0 9999.99\n";
+          execute_instruction(inst);
+
           //drive(0.3, 0.1);
           releaseAruco();
           //drive(-0.3, -0.1);
@@ -1341,7 +1353,7 @@ bool UVision::aruco_mission(float seconds){
           turn_angle(90, 0.1);
           drive(0.70, 0.1); // needs also tunning
           turn_angle(-90, 0.1);
-          drive(0.4, 0.1); // needs also tunning
+          drive(0.25, 0.1); // needs also tunning
           releaseAruco();
           drive(-0.4, -0.1);
 
@@ -1369,11 +1381,21 @@ bool UVision::aruco_mission(float seconds){
         execute_instruction(inst);
         inst = "regbot madd vel=0.1, tr=0.1: turn=-90\n";
         execute_instruction(inst);
-        inst = "regbot madd vel=0.1,edger=0.0,white=1: lv<3,dist=0.10\n";
+        inst = "regbot madd vel=0.1,edger=0.0,white=1: lv<3,dist=0.15\n";
+        execute_instruction(inst);
+        inst = "regbot madd vel=-0.2: dist=-0.60\n";
+        execute_instruction(inst);
+        inst = "regbot madd vel=0.2: dist=0.20\n";
         execute_instruction(inst);
 
-        inst = "regbot madd vel=-0.2: dist=-0.15\n";
+        n++;
+        float di = n*0.15;
+
+        inst = "regbot madd vel=0.1,edger=0.0,white=1:dist=" + std::to_string(di) + "\n";
         execute_instruction(inst);
+
+        // inst = "regbot madd vel=-0.2: dist=-0.15\n";
+        // execute_instruction(inst);
           
           //move until find the line
         
