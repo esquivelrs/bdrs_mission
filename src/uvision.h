@@ -37,6 +37,14 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <math.h>
+#include <map>
+#include <opencv2/core/types.hpp>
+#include <opencv2/core/core.hpp>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <opencv2/aruco.hpp>
+#include <opencv2/core/core.hpp>
 
 #include <opencv2/core.hpp>
 #include <opencv2/videoio.hpp>
@@ -44,6 +52,8 @@
 
 using namespace std;
 // forward declaration
+
+
 
 class UVision{
   
@@ -57,6 +67,12 @@ public:
    * Stream to screen - if any screen is available */
   bool processImage(float seconds);
   /**
+   * Stream to screen - if any screen is available */
+  bool golf_mission();
+  /**
+   * Stream to screen - if any screen is available */
+  bool aruco_mission(float seconds);
+  /**
    * Close camera */
   void stop();
   /// camera open flag
@@ -67,6 +83,7 @@ public:
   bool terminate = false;
   /// show image to X-terminal
   bool showImage = false;
+  bool streaming = false;
   /**
     * images for manual function using slider */
   cv::Mat dest;
@@ -77,10 +94,13 @@ public:
    * focal length for Sandberg camera in pixels */
   const int focalLength = 1008;
   const float golfBallDiameter = 0.043; // meter
+  const float holeDiameter = 0.28; // meter
+  float arm_dist = 0.40;
+  float aruco_size = 0.035;
   /**
    * camera position in robot coordinates (x (forward), y (left), z (up)) */
-  const float camPos[3] = {0.13,-0.02, 0.23};       // in meters
-  const float camTilt = 22 * M_PI / 180; // in radians
+  const float camPos[3] = {0.140,0.0, 0.205};       // in meters
+  const float camTilt = 23 * M_PI / 180; // in radians
   cv::Mat1f camToRobot;
 //   const float st = sin(camTilt);
 //   const float ct = cos(camTilt);
@@ -88,10 +108,17 @@ public:
 //                                          0.f ,  1.f, 0.f , camPos[1];
 //                                          -st, 0.f, ct, camPos[2];
 //                                          0.f ,  0.f, 0.f , 1.f);
+
+
+
+ 
   
 private:
   /// buffer for captured image
-  cv::Mat frame;
+  cv::Mat frame, frame_ud;
+  const int MSL = 200;
+  char s[200];
+  cv::Mat camera_matrix, dist_coeffs;
   /// openCV video capture function
   cv::VideoCapture cap;
   /// thread to keep buffer empty
@@ -114,13 +141,99 @@ private:
   void ballProjectionAndTest();
   //
   bool findAruco = false;
-  bool doFindAruco();
   // 
   /**
    * Calculates color distance between pix and col.
    * distance 0 is total match, else block distance for U and V only
    * \returns d = |du| + |dv| */
   int uvDistance(cv::Vec3b pix, cv::Vec3b col);
+
+  //Golf Variables
+  cv::Mat1f pos3drob;
+  vector<cv::Vec3i> balls_matrix;
+
+  std::map<float, cv::Mat1f> balls_dict;
+
+
+  cv::Mat1f holePos;
+
+  cv::Mat1f objPossition;
+  bool getBalls(string mode);
+  bool loopFrames(float seconds, string obj, string mode);
+  void move(cv::Mat1f ballPos, string mode);
+  void move_arround();
+  void takeBall();
+  void releaseBall();
+  void prepareArmAruco();
+  void takeAruco();
+  void releaseAruco();
+  bool goto_home_aruco();
+  cv::Mat1f calc_pos3drob(cv::Vec3i obj, float diameter);
+  bool findfHole();
+  cv::Mat1f rotate_translate(cv::Mat1f position, float angle);
+  void update_robot_pos(float x, float y, float angle);
+  void turn_angle(float angle, float vel, float tr);
+  void drive(float dist, float vel);
+  void goto_aruco_area();
+  void execute_instruction(string instruction);
+
+  void go_home();
+
+
+  int server_fd, new_socket;
+  struct sockaddr_in address;
+
+
+  //For fine tunning of the ball
+  int cx_for_ball = 648;
+  int cy_for_ball = 454;
+  int dx_for_ball = 400;
+  int dy_for_ball = 400;
+
+  //position in robot coordinates (x (forward), y (left), z (up)) */
+  std::vector<cv::Mat> boundary;
+  void addBoundaryPoint(double x, double y);
+  bool isWithinBoundary(double x, double y);
+
+  float robot_pos[2];
+  float robot_angle;
+  cv::Mat1f posToRobot;
+
+
+  cv::Mat1f robot2orig(float x, float y);
+  cv::Mat1f orig2robot(float x, float y);
+
+  const cv::Scalar low_orange = cv::Scalar(0, 45, 100);
+  const cv::Scalar up_orange = cv::Scalar(30, 255, 255);
+
+  const cv::Scalar low_blue = cv::Scalar(90,20,200);
+  const cv::Scalar up_blue = cv::Scalar(120, 255, 255);
+
+  float distanceThreshold = 0.05;
+  int move_arround_dir;
+
+  void stream();
+  int socket_val;
+  const int port = 8080;
+
+  bool doFindAruco(float seconds, int id);
+  cv::Mat1f aruco_location();
+
+  std::map<int, std::vector<cv::Vec3i>> markerSamples;
+  // struct markerSamples {
+  //   int id;
+  //   std::vector<cv::Vec3i> samples;
+  // };
+
+
+  float minCornerX; 
+  int leftMarkerId; 
+  int maxDist_aruco = 2;
+  cv::Vec3i leftArucoFramePos;
+  cv::Mat1f aruco_pos;
+  
+
+
   
 };
 

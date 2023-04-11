@@ -32,6 +32,8 @@
 #include "src/uplay.h"
 #include "src/uevent.h"
 #include "src/uencoder.h"
+#include "src/utime.h"
+#include <math.h>
 
 using namespace std;
 
@@ -205,7 +207,7 @@ void restartRamp()
   bridge.tx("regbot madd servo=1, pservo=700, vservo=200: time=5.0\n");   // Raise arm
   bridge.tx("regbot madd vel=0.2: lv=20, dist=0.8\n");
   bridge.tx("regbot madd vel=0.3, edger=0.0, white=1: dist=1.0, xl>16  \n");  // find home1
-  bridge.tx("regbot madd vel=0.2, tr=0.0: turn=180 \n");    // U-turn at home1
+  bridge.tx("regbot madd vel=0.2, tr=0.0: turn=200, time=3.0 \n");   // U-turn at home1
   bridge.tx("regbot madd vel=0.0: time=1.0\n");
   bridge.tx("regbot madd vel=0.2: lv=20, dist=0.8\n");
   bridge.tx("regbot madd vel=0.3, edgel=0.0, white=1: ir2<0.4  \n");
@@ -214,7 +216,7 @@ void restartRamp()
   bridge.tx("regbot madd vel=0.2: lv=20, dist=0.8\n");
   bridge.tx("regbot madd vel=0.3, edgel=0.0, white=1: dist=7.5 \n");
   bridge.tx("regbot madd vel=0.0: time=1.0\n");
-  bridge.tx("regbot madd vel=0.2, tr=0.0: turn=180 \n");    // U-turn at home2
+  bridge.tx("regbot madd vel=0.2, tr=0.0: turn=190 \n");    // U-turn at home2
   bridge.tx("regbot madd vel=0.0: time=1.0\n");
   bridge.tx("regbot madd vel=0.2: lv=20, dist=0.8\n");
   bridge.tx("regbot madd vel=0.2, edgel=0.0, white=1: dist=0.5  \n");
@@ -233,7 +235,7 @@ void ballOnRamp()
   event.clearEvents();
   usleep(2000);
   bridge.tx("regbot madd servo=1, pservo=600, vservo=200: time=5.0\n");   // Raise arm
-  bridge.tx("regbot madd servo=2, pservo=100: time=4.0\n");   // Open gripper
+  bridge.tx("regbot madd servo=2, pservo=325: time=4.0\n");   // Open gripper
 
   // Go to XL
   bridge.tx("regbot madd vel=0.2: dist=0.1\n");
@@ -265,7 +267,7 @@ void ballOnRamp()
   bridge.tx("regbot madd vel=0.3: lv=20, dist=0.05\n");
   bridge.tx("regbot madd vel=0.3, edger=0, white=1:dist=1.5\n");
 
-  bridge.tx("regbot madd vel=0.05,tr=0.0:turn=180\n");
+  bridge.tx("regbot madd vel=0.1,tr=0.0:turn=180\n");
 
   bridge.tx("regbot start \n");
 
@@ -370,9 +372,33 @@ void stairs()
 
 void offHeadingController()
 {
+  
+  // reset bridge mission
+  bridge.tx("regbot mclear\n");
+  event.clearEvents();
+  usleep(2000);
+
   // bridge.tx("regbot:ctrn subscribe -1");
   bridge.tx("regbot ctrn 0 1 0 1 9999.99 1 0 1 1 0 1 1 0 1 1 0 1 9999.99 1 0 1 0 1 1 0 9999.99\n");
+
+  bridge.tx("regbot start\n");
+  event.waitForEvent(0);
 }
+
+void onHeadingController()
+{
+  // reset bridge mission
+  bridge.tx("regbot mclear\n");
+  event.clearEvents();
+  usleep(2000);
+
+  // bridge.tx("regbot:ctrn subscribe -1");
+  bridge.tx("regbot ctrn 1 1 1 1 9999.99 1 1 1 1 1 1 1 1 1 1 0 1 9999.99 1 0 1 0 1 1 1 9999.99\n");
+
+  bridge.tx("regbot start\n");
+  event.waitForEvent(0);
+}
+
 
 void tunnel()
 {
@@ -669,20 +695,20 @@ void roundaboutGate()
 
 // Find white line and go a bit
   bridge.tx("regbot madd vel=0.3, tr=3: dist=0.3, turn=180\n"); 
-  bridge.tx("regbot madd vel=0.2, edgel=0.0, white=1: dist=0.8\n"); 
+  bridge.tx("regbot madd vel=0.2, edgel=0.0, white=1: dist=1.0\n"); 
   bridge.tx("regbot madd vel=0.0: time=0.1\n");
 
   // Turn and back up
   bridge.tx("regbot madd vel=0.0: time=0.1  \n");
-  bridge.tx("regbot madd vel=0.2, tr=0.0: turn=90 \n");
+  bridge.tx("regbot madd vel=0.2, tr=0.0: turn=95 \n");
   bridge.tx("regbot madd vel=0.0: time=0.1  \n");
   bridge.tx("regbot madd vel=-0.2: dist=-0.8  \n");
   bridge.tx("regbot madd vel=0.0: time=0.1  \n");
 
 //   // Go around in circle
-  bridge.tx("regbot madd servo=1,pservo=875,vservo=100:time=6.0\n"); // Raise arm to avoid gates
+  bridge.tx("regbot madd servo=1,pservo=925,vservo=100:time=6.0\n"); // Raise arm to avoid gates
   bridge.tx("regbot madd vel=0.1: dist=0.15  \n");
-  bridge.tx("regbot madd vel=0.2, tr=0.0: turn=105 \n");
+  bridge.tx("regbot madd vel=0.2, tr=0.0: turn=110 \n");
   bridge.tx("regbot madd vel=0.1: dist=0.1\n");
   bridge.tx("regbot madd vel=0.0: time=0.1  \n");
   bridge.tx("regbot madd vel=0.2, tr=0.4: dist=1.9, turn=500 \n");
@@ -712,13 +738,13 @@ void roundaboutHome()
   bridge.tx("regbot madd : ir2>0.4 \n");
   bridge.tx("regbot madd vel=0.0: time=0.1\n"); 
   bridge.tx("regbot madd vel=0.3: dist=3.0, lv=20\n");
-  bridge.tx("regbot madd vel=0.2: dist=0.8\n");
-  bridge.tx("regbot madd vel=0.1, tr=0.0: turn=90 \n");
+  bridge.tx("regbot madd vel=0.1, tr=0.1: turn=100 \n");
+  bridge.tx("regbot madd vel=0.2, edger=0.0, white=1: dist=0.2\n"); 
   bridge.tx("regbot madd vel=0.2: dist=2.0, xl>16 \n"); 
   bridge.tx("regbot madd vel=0.0: time=0.1\n"); 
   bridge.tx("regbot madd vel=0.2, tr=0.05: turn=-90 \n"); 
   bridge.tx("regbot madd vel=0.0: time=0.1\n"); 
-  bridge.tx("regbot madd vel=0.2, edger=0.0, white=1: dist=1.7\n"); 
+  bridge.tx("regbot madd vel=0.2, edger=0.0, white=1: dist=2.3\n"); 
   bridge.tx("regbot madd vel=0.0: time=0.1\n"); 
   bridge.tx("regbot madd vel=0.2, tr=0.0: turn=180 \n");
 
@@ -766,42 +792,37 @@ void deliverBallFromStartRamp()
 {
   bridge.tx("regbot mclear\n");
   event.clearEvents();
-  usleep(200);
-
+  usleep(2000);   
   bridge.tx("regbot madd servo=2, pservo=-600: time=1.0 \n"); 
   bridge.tx("regbot madd servo=1, pservo=200, vservo=120: time=1.0\n");
-  bridge.tx("regbot madd vel=0.3: dist=0.1\n");
-  bridge.tx("regbot madd vel=0.3: lv=20, dist=0.05\n"); 
-  bridge.tx("regbot madd vel=0.3, edgel=0, white=1:lv<4, xl>15\n");   // find XL
-  bridge.tx("regbot madd vel=0.3: dist=0.1\n");
-  bridge.tx("regbot madd vel=0.3: lv=20, dist=0.05\n"); 
-  bridge.tx("regbot madd vel=0.3, edger=0, white=1: dist=1.0\n"); 
-  bridge.tx("regbot madd vel=0.3: dist=0.3\n"); 
-  bridge.tx("regbot madd vel=0.0: time=2.0\n");
+  bridge.tx("regbot madd vel=0.2:dist=0.1\n");
+  bridge.tx("regbot madd vel=0.2: lv=20, dist=0.05\n"); 
+  bridge.tx("regbot madd vel=0.2, edgel=0, white=1:lv<4, xl>15\n");
+  bridge.tx("regbot madd vel=0.2: dist=0.1\n");
+  bridge.tx("regbot madd vel=0.2: lv=20, dist=0.05\n"); 
+  bridge.tx("regbot madd vel=0.2, edger=0, white=1: dist=1.0\n"); 
+  bridge.tx("regbot madd vel=0.2:dist=0.3\n"); 
+  bridge.tx("regbot madd vel=0.0:time=2.0\n");
+  bridge.tx("regbot madd vel=0.1,tr=0.0:turn=-20\n");   // FIX: Needs fine tuning
+  bridge.tx("regbot madd vel=0.1:dist=0.25\n");     // FIX: Need fine tuning
+  bridge.tx("regbot madd vel=0.0:time=1.0\n");
+  bridge.tx("regbot madd servo=1,pservo=0,vservo=100:time=6.0\n");
+  bridge.tx("regbot madd servo=2,pservo=-150:time=2.0 \n");
+  bridge.tx("regbot madd vel=0.0:time=1.0\n");
+  bridge.tx("regbot madd vel=0.1,tr=0.0:turn=-35\n");
 
-  bridge.tx("regbot madd vel=0.05, tr=0.0: turn=-15\n");  // turn slightly
-  bridge.tx("regbot madd vel=0.05: dist=0.23\n");         // move forward slightly
-  bridge.tx("regbot madd vel=0.0: time=1.0\n");
-
-  bridge.tx("regbot madd servo=1, pservo=25, vservo=100: time=3.0\n");  // lower arm
-  bridge.tx("regbot madd servo=2, pservo=-125: time=3.0\n");            // Open gripper
-
-  bridge.tx("regbot madd vel=0.0: time=1.0\n");
-  bridge.tx("regbot madd vel=0.08, tr=0.0: turn=14\n");       // sweep left to find hole
-  bridge.tx("regbot madd vel=0.0: time=1.0\n");
-  bridge.tx("regbot madd vel=0.08, tr=0.0: turn=15\n");       // sweep left to find hole
-  bridge.tx("regbot madd vel=0.0: time=0.5\n");
+  bridge.tx("regbot madd vel=0.0:time=0.5\n");
 
   // Return to home
-  bridge.tx("regbot madd servo=1, pservo=500,vservo=120:time=5.0\n");
+  bridge.tx("regbot madd servo=1, pservo=200,vservo=200:time=3.0\n");
   bridge.tx("regbot madd vel=0.0:time=2.0\n");
 
-  bridge.tx("regbot madd vel=0.1,tr=0.0:turn=55\n");  // turn left to find line
+  bridge.tx("regbot madd vel=0.1,tr=0.0:turn=120\n");
 
   bridge.tx("regbot madd vel=0.3: dist=0.5, lv=20\n");
-  bridge.tx("regbot madd vel=0.3, edger=0.0, white=1: dist=3.0, lv<4\n"); // Drive till end of ramp
-  bridge.tx("regbot madd vel=0.3, edger=0.0, white=1: ir2<0.4, lv<4 \n");
-  bridge.tx("regbot madd vel=0.2, tr=0.0: turn=180\n");       // u-turn at goal
+  bridge.tx("regbot madd vel=0.3, edger=0.0, white=1: dist=3\n"); // Drive till end of ramp
+  bridge.tx("regbot madd vel=0.2, edger=0.0, white=1: ir2<0.4\n");
+  bridge.tx("regbot madd vel=0.2, tr=0.0: turn=180\n");
   bridge.tx("regbot madd vel=0.2, edger=0, white=1: lv<4, dist=1.1\n");
 
   bridge.tx("regbot start \n");
@@ -908,13 +929,19 @@ void axeFastTrackSequence()
   fastTrackToHome();
 }
 
+void getBallOnRamp()
+{
+  //ballOnRamp();  
+  deliverBallFromStartRamp();
+}
+
 void seesawST()
 {
   bridge.tx("regbot mclear\n");
   event.clearEvents();
 
   bridge.tx("regbot madd servo=1, pservo=600, vservo=200: time=5.0\n");   // Raise arm
-  bridge.tx("regbot madd servo=2, pservo=100: time=4.0\n");   // Open gripper
+  bridge.tx("regbot madd servo=2, pservo=325: time=4.0\n");   // Open gripper
 
   // follow white line, find cross line
   bridge.tx("regbot madd vel=0.3: dist=0.1\n");
@@ -932,8 +959,13 @@ void seesawST()
   bridge.tx("regbot madd vel=0.0: time=0.1\n");  // 
   bridge.tx("regbot madd servo=1, pservo=0, vservo=120: time=5.0\n");   // Lower arm
   bridge.tx("regbot madd vel=0.0: time=0.1\n");
-  bridge.tx("regbot madd vel=0.05: lv=20, dist=0.5\n");  // 
-  bridge.tx("regbot madd vel=0.05, edger=0, white=1: dist=1.105\n");  // 
+  bridge.tx("regbot madd vel=0.1: lv=20, dist=0.5\n");  // 
+
+  bridge.tx("regbot madd vel=0.0: time=0.1\n");
+  bridge.tx("regbot madd vel=0.1, edgel=0, white=1: dist=0.3\n");  //
+  bridge.tx("regbot madd vel=0.1, edger=1.0, white=1: dist=0.875\n");
+  bridge.tx("regbot madd vel=0.0: time=0.1\n");
+  bridge.tx("regbot madd servo=1, pservo=0, vservo=120: time=5.0\n");   // Lower arm
 
   bridge.tx("regbot madd vel=0.0: time=0.1\n");  // 
   bridge.tx("regbot madd servo=1, pservo=-75, vservo=120: time=2.0\n");   // Lower arm
@@ -966,6 +998,11 @@ void seesawST()
 
 }
 
+void aruco_mission(){
+  bool aruco = vision.aruco_mission(560);
+}
+
+
 int main(int argc, char **argv)
 {
   cout << "# Hello, Robobot user mission starting ..." << endl;
@@ -975,27 +1012,28 @@ int main(int argc, char **argv)
 
 // ALL THIS WORKS AND IS TESTED //
   // guillotineRampSequence();   // works
-  // axeFastTrackSequence();     // works 
+  //axeFastTrackSequence();     // works 
   // restartRamp();              // Works
-  // ballOnRamp();  
-  // deliverBallFromStartRamp(); // Works
-  // restartRamp();              // works
-  // seesawST();
-  // restartRamp();              // works
-  // deliverBallFromStartRamp(); // works
+  //getBallOnRamp();
+  // restartRamp();              // works  
+  // seesawST();          // WITHOUT heading controller
+  //restartRamp();              // works
+  //deliverBall();
   // tunnelSequence();           // works
   // goal();                     // works
 // TILL HERE //
 
 
 // WORKS AND TESTED INDIVIDUALLY //
-  //stairs();
-  //roundaboutGate();          // works from start 50 pct chance
-  //roundaboutHome();         // Does NOT work
+  stairs();
+  // roundaboutGate();          // works from start 50 pct chance
+  // roundaboutHome();         // Does NOT work
+
+  //aruco_mission();
 
  
 // NOT TESTED
-  
+
   // armNeutralPos();
   // patrolSequence();           // Stopping robot does NOT work. Following(stop/go) is NOT implemented
 
