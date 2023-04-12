@@ -150,8 +150,8 @@ void restartRamp()
   bridge.tx("regbot madd vel=0.3, edgel=0.0, white=1: ir2<0.4  \n");
   bridge.tx("regbot madd vel=0.2, tr=0.0: turn=180 \n");    // U-turn in front of goal
   bridge.tx("regbot madd vel=0.0: time=1.0\n");
-  bridge.tx("regbot madd vel=0.2: lv=20, dist=0.8\n");
-  bridge.tx("regbot madd vel=0.3, edgel=0.0, white=1: dist=7.5 \n");
+  bridge.tx("regbot madd vel=0.4: lv=20, dist=0.8\n");
+  bridge.tx("regbot madd vel=0.4, edgel=0.0, white=1: dist=7.5 \n");
   bridge.tx("regbot madd vel=0.0: time=1.0\n");
   bridge.tx("regbot madd vel=0.2, tr=0.0: turn=190 \n");    // U-turn at home2
   bridge.tx("regbot madd vel=0.0: time=1.0\n");
@@ -717,6 +717,50 @@ void goal()
   cout <<  "user:# obstacle " + string(__func__) + " has finished\n" << endl;
 }
 
+void deliverBallFromStartRampNoHead()
+{
+  bridge.tx("regbot mclear\n");
+  event.clearEvents();
+  usleep(2000);
+  bridge.tx("regbot madd servo=2,pservo=-600:time=1.0 \n"); 
+  bridge.tx("regbot madd servo=1, pservo=200,vservo=120:time=1.0\n");
+  bridge.tx("regbot madd vel=0.2:dist=0.1\n");
+  bridge.tx("regbot madd vel=0.2: lv=20, dist=0.05\n"); 
+  bridge.tx("regbot madd vel=0.2, edgel=0, white=1:lv<4, xl>15\n");
+  bridge.tx("regbot madd vel=0.2: dist=0.1\n");
+  bridge.tx("regbot madd vel=0.2: lv=20, dist=0.05\n"); 
+  bridge.tx("regbot madd vel=0.2, edger=0, white=1: dist=1.0\n"); 
+  bridge.tx("regbot madd vel=0.2:dist=0.3\n"); 
+  bridge.tx("regbot madd vel=0.0:time=2.0\n");
+  bridge.tx("regbot madd vel=0.05,tr=0.0:turn=-18\n");
+  bridge.tx("regbot madd vel=0.05:dist=0.17\n");
+  bridge.tx("regbot madd vel=0.0:time=1.0\n");
+  bridge.tx("regbot madd servo=1,pservo=0,vservo=100:time=6.0\n");
+  bridge.tx("regbot madd vel=0.0: time=0.1 \n");
+  bridge.tx("regbot madd servo=2,pservo=-350:time=2.0 \n");
+  bridge.tx("regbot madd vel=0.0:time=1.0\n");
+  bridge.tx("regbot madd vel=0.05,tr=0.0:turn=-30\n");
+
+  bridge.tx("regbot madd vel=0.0:time=0.5\n");
+
+  // Return to home
+  bridge.tx("regbot madd servo=1, pservo=200,vservo=200:time=3.0\n");
+  bridge.tx("regbot madd vel=0.0:time=2.0\n");
+
+  bridge.tx("regbot madd vel=0.1,tr=0.0:turn=120\n");
+
+  bridge.tx("regbot madd vel=0.3: dist=0.5, lv=20\n");
+  bridge.tx("regbot madd vel=0.3, edger=0.0, white=1: dist=3\n"); // Drive till end of ramp
+  bridge.tx("regbot madd vel=0.2, edger=0.0, white=1: ir2<0.4\n");
+  bridge.tx("regbot madd vel=0.2, tr=0.0: turn=180\n");
+  bridge.tx("regbot madd vel=0.2, edger=0, white=1: lv<4, dist=1.1\n");
+
+  bridge.tx("regbot start \n");
+
+  event.waitForEvent(0);
+	cout << "user:# Waiting  for " + string(__func__) + " to finish" << endl;
+}
+
 void deliverBallFromStartRamp()
 {
   bridge.tx("regbot mclear\n");
@@ -843,7 +887,7 @@ void guillotineRampSequence()
 
 void tunnelSequence()
 {
-  offHeadingController();
+  // offHeadingController();
   tunnel();
   tunnelToHome();
 }
@@ -937,24 +981,23 @@ int main(int argc, char **argv)
 // ALL THIS WORKS AND IS TESTED //
   guillotineRampSequence();
   axeFastTrackSequence();
+  roundaboutGate();
+  roundaboutHome();
 
-  restartRamp();
-  getBallOnRamp();
+  // tunnelSequence();
+  // restartRamp();
+  // stairs();
+
+  // restartRamp();
+  // getBallOnRamp();
 
   restartRamp();
   seesawST();
 
-  restartRamp();
-  deliverBallFromStartRamp();
-
-  // roundaboutGate();
-  // roundaboutHome();
-  // tunnelSequence();
-
   // restartRamp();
-  // stairs();
+  // deliverBallFromStartRampNoHead();
 
-  //aruco_mission();
+  aruco_mission();
 
   // restartRamp();
   // ballOnRamp();
@@ -964,10 +1007,9 @@ int main(int argc, char **argv)
   // restartRamp();
   // deliverBallFromStartRamp();
   
-  // goal();
+  goal();
 
 // TILL HERE //
-
 
 // WORKS AND TESTED INDIVIDUALLY //
   
