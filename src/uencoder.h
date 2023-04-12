@@ -22,7 +22,7 @@ class UEncoder{
 
 public:
     void setup();
-    bool decode(char * msg)
+    bool decode(char * msg);
 
 public:
     uint32_t e1, e2;

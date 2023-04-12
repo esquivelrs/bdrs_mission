@@ -13,7 +13,7 @@ void UEncoder::setup()
 
 }
 
-bool Uencoder::decode(char* msg)
+bool UEncoder::decode(char* msg)
 {
   bool used = true;
   const char * p1 = strchrnul(msg, ':');

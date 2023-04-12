@@ -592,11 +592,11 @@ void patrolSequence()
 {
   while (not event.gotEvent(0))
   {
-    str::cout <<"encoder1:" << enc.e3 << endl;
-    str::cout <<"encoder2:" << enc.e4 << endl;
+    cout <<"encoder1:" << enc.e3 << endl;
+    cout <<"encoder2:" << enc.e4 << endl;
     usleep(10000);
   } 
-  event.waitForevent(0);
+  event.waitForEvent(0);
 }
 
 int main(int argc, char **argv)
@@ -607,8 +607,8 @@ int main(int argc, char **argv)
 
   // testMethod();
   // gripExample();
-  stairs();
-  // guillotineRampSequence();  // works
+  // stairs();
+  guillotineRampSequence();  // works
   // restartRamp();             // works
   // seesawSequence();          // buggy after seesaw
   // tunnelSequence();          // works, but should rerun to finetune

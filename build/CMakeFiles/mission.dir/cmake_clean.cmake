@@ -2,6 +2,7 @@ file(REMOVE_RECURSE
   "CMakeFiles/mission.dir/main.cpp.o"
   "CMakeFiles/mission.dir/src/ubridge.cpp.o"
   "CMakeFiles/mission.dir/src/ucomment.cpp.o"
+  "CMakeFiles/mission.dir/src/uencoder.cpp.o"
   "CMakeFiles/mission.dir/src/uevent.cpp.o"
   "CMakeFiles/mission.dir/src/uplay.cpp.o"
   "CMakeFiles/mission.dir/src/upose.cpp.o"

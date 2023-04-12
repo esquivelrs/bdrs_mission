@@ -4,6 +4,7 @@
 CMakeFiles/mission.dir/main.cpp.o: ../main.cpp
 CMakeFiles/mission.dir/main.cpp.o: ../src/ubridge.h
 CMakeFiles/mission.dir/main.cpp.o: ../src/ucomment.h
+CMakeFiles/mission.dir/main.cpp.o: ../src/uencoder.h
 CMakeFiles/mission.dir/main.cpp.o: ../src/uevent.h
 CMakeFiles/mission.dir/main.cpp.o: ../src/uplay.h
 CMakeFiles/mission.dir/main.cpp.o: ../src/upose.h
@@ -46,6 +47,7 @@ CMakeFiles/mission.dir/main.cpp.o: /usr/include/opencv4/opencv2/videoio.hpp
 CMakeFiles/mission.dir/src/ubridge.cpp.o: ../src/ubridge.cpp
 CMakeFiles/mission.dir/src/ubridge.cpp.o: ../src/ubridge.h
 CMakeFiles/mission.dir/src/ubridge.cpp.o: ../src/ucomment.h
+CMakeFiles/mission.dir/src/ubridge.cpp.o: ../src/uencoder.h
 CMakeFiles/mission.dir/src/ubridge.cpp.o: ../src/uevent.h
 CMakeFiles/mission.dir/src/ubridge.cpp.o: ../src/upose.h
 CMakeFiles/mission.dir/src/ubridge.cpp.o: ../src/ustate.h
@@ -87,6 +89,10 @@ CMakeFiles/mission.dir/src/ubridge.cpp.o: /usr/include/opencv4/opencv2/videoio.h
 CMakeFiles/mission.dir/src/ucomment.cpp.o: ../src/ubridge.h
 CMakeFiles/mission.dir/src/ucomment.cpp.o: ../src/ucomment.cpp
 CMakeFiles/mission.dir/src/ucomment.cpp.o: ../src/ucomment.h
+
+CMakeFiles/mission.dir/src/uencoder.cpp.o: ../src/ubridge.h
+CMakeFiles/mission.dir/src/uencoder.cpp.o: ../src/uencoder.cpp
+CMakeFiles/mission.dir/src/uencoder.cpp.o: ../src/uencoder.h
 
 CMakeFiles/mission.dir/src/uevent.cpp.o: ../src/ubridge.h
 CMakeFiles/mission.dir/src/uevent.cpp.o: ../src/uevent.cpp

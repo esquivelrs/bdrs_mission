@@ -25,6 +25,8 @@ src/uplay.h
 /home/local/mission/src/uplay.h
 src/uevent.h
 /home/local/mission/src/uevent.h
+src/uencoder.h
+/home/local/mission/src/uencoder.h
 
 /home/local/mission/src/ubridge.h
 iostream
@@ -57,6 +59,34 @@ signal.h
 -
 
 /home/local/mission/src/ucomment.h
+iostream
+-
+sys/time.h
+-
+cstdlib
+-
+sys/socket.h
+-
+sys/types.h
+-
+netdb.h
+-
+thread
+-
+mutex
+-
+sys/types.h
+-
+sys/stat.h
+-
+fcntl.h
+-
+unistd.h
+-
+math.h
+-
+
+/home/local/mission/src/uencoder.h
 iostream
 -
 sys/time.h

@@ -269,6 +269,33 @@ src/ucomment.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mission.dir/build.make CMakeFiles/mission.dir/src/ucomment.cpp.s
 .PHONY : src/ucomment.cpp.s
 
+src/uencoder.o: src/uencoder.cpp.o
+
+.PHONY : src/uencoder.o
+
+# target to build an object file
+src/uencoder.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mission.dir/build.make CMakeFiles/mission.dir/src/uencoder.cpp.o
+.PHONY : src/uencoder.cpp.o
+
+src/uencoder.i: src/uencoder.cpp.i
+
+.PHONY : src/uencoder.i
+
+# target to preprocess a source file
+src/uencoder.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mission.dir/build.make CMakeFiles/mission.dir/src/uencoder.cpp.i
+.PHONY : src/uencoder.cpp.i
+
+src/uencoder.s: src/uencoder.cpp.s
+
+.PHONY : src/uencoder.s
+
+# target to generate assembly for a file
+src/uencoder.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/mission.dir/build.make CMakeFiles/mission.dir/src/uencoder.cpp.s
+.PHONY : src/uencoder.cpp.s
+
 src/uevent.o: src/uevent.cpp.o
 
 .PHONY : src/uevent.o
@@ -453,6 +480,9 @@ help:
 	@echo "... src/ucomment.o"
 	@echo "... src/ucomment.i"
 	@echo "... src/ucomment.s"
+	@echo "... src/uencoder.o"
+	@echo "... src/uencoder.i"
+	@echo "... src/uencoder.s"
 	@echo "... src/uevent.o"
 	@echo "... src/uevent.i"
 	@echo "... src/uevent.s"
