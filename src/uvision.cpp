@@ -945,7 +945,7 @@ void UVision::goto_aruco_area(){
   bridge.tx("regbot madd vel=0.1, tr=0.15: turn=-90\n"); 
   bridge.tx("regbot madd vel=0.1,edger=0.0,white=1: lv<3,dist=0.15\n");
   bridge.tx("regbot madd vel=-0.2: dist=-0.70\n"); 
-  bridge.tx("regbot madd vel=0.2,edger=0.0,white=1: dist=0.50\n"); 
+  bridge.tx("regbot madd vel=0.2,edger=0.0,white=1: dist=0.30\n"); 
   bridge.tx("regbot madd vel=0.0:time=0.8\n");
 
   bridge.tx("regbot start\n");
@@ -1077,7 +1077,7 @@ cv::Mat1f UVision::aruco_location(){
 }
 
 
-bool UVision::doFindAruco(float seconds, int id=-1)
+bool UVision::doFindAruco(float seconds, int id=-1, float subs = 0)
 { // image is in 'frame'
   printf("# GET ARUCO\n");
   markerSamples.clear();
@@ -1250,7 +1250,7 @@ bool UVision::doFindAruco(float seconds, int id=-1)
   if (status){
     std::cout << "leftArucoFramePos " << leftArucoFramePos <<  std::endl;
     aruco_pos = calc_pos3drob(leftArucoFramePos, aruco_size);
-    aruco_pos(0, 0) = aruco_pos.at<float>(0, 0);
+    aruco_pos(0, 0) = aruco_pos.at<float>(0, 0)- subs;
     //aruco_pos(0, 1) = aruco_pos.at<float>(0, 1) + 0.015;
 
     std::cout << "aruco_pos " << aruco_pos <<  std::endl;
@@ -1258,6 +1258,7 @@ bool UVision::doFindAruco(float seconds, int id=-1)
 
   return status;
 }
+
 
 bool UVision::goto_home_aruco(){
   bridge.tx("regbot mclear\n");
@@ -1294,27 +1295,29 @@ bool UVision::aruco_mission(float seconds){
 
   t.now();
   int n=0;
+  int tries=0;
 
-  while(t.getTimePassed() < seconds and n<4){ // add number of completed arucos
+  while(t.getTimePassed() < seconds and n<4 and tries < 3){ // add number of completed arucos
   //while(false){
-    bool status = doFindAruco(15);
-    if (false){
-      std::cout << "Marker: "<<  leftMarkerId << " aruco_pos: " << aruco_pos << std::endl;
-      float x = aruco_pos.at<float>(0, 0);
-      float dist = x - arm_dist; //- 0.05;
-      //float theta = 7 * (M_PI/180); // compensation angle can be removed(it is to compensate the error related to the distances of the object)
-      float y = aruco_pos.at<float>(0, 1) + 0.025; // 0.01 is the offset of the arm
-      //y = y - dist*sin(theta) * y/abs(y) + 0.05; //  compensation of the error - dist*sin(theta) * y/abs(y) + 0.05
-      std::cout << "y " << y <<  std::endl;
-      std::cout << "dist " << dist <<  std::endl;
-      
-
+    bool status = doFindAruco(15,-1,0.025);
+    if (status == false){
+      tries++;
+      // std::cout << "Marker: "<<  leftMarkerId << " aruco_pos: " << aruco_pos << std::endl;
+      // float x = aruco_pos.at<float>(0, 0);
+      // float dist = x - arm_dist; //- 0.05;
+      // //float theta = 7 * (M_PI/180); // compensation angle can be removed(it is to compensate the error related to the distances of the object)
+      // float y = aruco_pos.at<float>(0, 1) + 0.025; // 0.01 is the offset of the arm
+      // //y = y - dist*sin(theta) * y/abs(y) + 0.05; //  compensation of the error - dist*sin(theta) * y/abs(y) + 0.05
+      // std::cout << "y " << y <<  std::endl;
+      // std::cout << "dist " << dist <<  std::endl;
+    
     }
     // prepareArmAruco();
     // takeAruco();
     
     
     if (status){
+      tries=0;
       std::cout << "Marker: "<<  leftMarkerId << " aruco_pos: " << aruco_pos << std::endl;
       float x = aruco_pos.at<float>(0, 0);
       float dist = x - arm_dist; //- 0.05;
@@ -1330,14 +1333,17 @@ bool UVision::aruco_mission(float seconds){
       if (true){
         
         std::cout << "Y in interval " << y <<  std::endl;
-        prepareArmAruco();
+        //prepareArmAruco();
 
         //float angle = atan(y/dist)* (180.0 / M_PI);
         //turn_angle(-angle, 0.1);
 
         //move(aruco_pos);
 
+        prepareArmAruco();
+
         inst = "regbot madd vel=0.1,edger=0.0,white=1:dist=" + std::to_string(dist) + "\n";
+        
         execute_instruction(inst);
 
         //drive(dist, 0.1);
@@ -1348,9 +1354,9 @@ bool UVision::aruco_mission(float seconds){
         inst = "regbot madd vel=-0.2: xl>16\n";
         execute_instruction(inst);
         drive(-0.8, -0.1);
-        turn_angle(110, 0.1);
+        turn_angle(100, 0.1);
         drive(-0.2, -0.1);
-        status = doFindAruco(15, leftMarkerId);
+        status = doFindAruco(15, leftMarkerId, 0.1);
         if (status){
           std::cout << "ARUCO HOME FOUND" << aruco_pos <<  std::endl;
 
@@ -1403,18 +1409,21 @@ bool UVision::aruco_mission(float seconds){
         inst = "regbot madd vel=0.1,edger=0.0,white=1: lv<3,xl>16\n";
         execute_instruction(inst);
         inst = "regbot madd vel=0.1, tr=0.15: turn=-90\n";
+
+
+        execute_instruction(inst);
+        inst = "regbot madd vel=0.1,edger=0.0,white=1: lv<3,dist=0.15\n";
+        execute_instruction(inst);
+        inst = "regbot madd vel=-0.2: dist=-0.40\n";
         execute_instruction(inst);
 
         n++;
-        float di = n*0.10;
+        float di = n*0.15;  
 
         inst = "regbot madd vel=0.1,edger=0.0,white=1:dist=" + std::to_string(di) + "\n";
         execute_instruction(inst);
 
-        // inst = "regbot madd vel=0.1,edger=0.0,white=1: lv<3,dist=0.15\n";
-        // execute_instruction(inst);
-        // inst = "regbot madd vel=-0.2: dist=-0.60\n";
-        // execute_instruction(inst);
+
         // inst = "regbot madd vel=0.2,edger=0.0,white=1: dist=0.25\n";
         // execute_instruction(inst);
 
@@ -1444,6 +1453,11 @@ bool UVision::aruco_mission(float seconds){
 
   }
 
+
+
+  //t.getTimePassed() < seconds and n<4 and tries < 3
+
+  cout << "ARUCO RESULTS time="<< t.getTimePassed() << " captures " << n << " tries " << tries << "\n";
   goto_home_aruco();
 
 

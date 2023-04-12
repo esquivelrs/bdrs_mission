@@ -84,74 +84,11 @@ void testMethod()
   bridge.tx("regbot madd vel=-0.3, tr=0.8: turn=110\n");
   bridge.tx("regbot madd vel=0.0: time=0.8\n");
 
-  // bridge.tx("regbot madd vel=0.3, tr=0.1: turn=85\n");
-  // bridge.tx("regbot madd vel=0.3: time=1.0\n");
-  // bridge.tx("regbot madd vel=0.1: dist=0.1\n");
-  // bridge.tx("regbot madd vel=0.2, edger=0, white=1: dist=0.2, lv<4\n");
-  // bridge.tx("regbot madd vel=0.2, edger=0, white=1: xl>15, lv<4\n");
-  // bridge.tx("regbot madd vel=0.0: time=0.5\n");
-  
-
   // start this mission
   bridge.tx("regbot start\n");
   cout << "user:# Waiting for " + string(__func__) + " to finish" << endl;
   event.waitForEvent(0);
   cout << "user:# obstacle " + string(__func__) + " has finished" << endl;
-}
-
-void uTurn()
-{
-  // Utility moving sequence
-  // Robot moves forward slightly, then executes a U-turn,
-  // and returns to the right edge of the original position
-
-  bridge.tx("regbot mclear\n");
-  event.clearEvents();
-
-  // find and follow line
-  bridge.tx("regbot madd vel=0.2: dist=0.2\n");
-  bridge.tx("regbot madd vel=0.2: lv=20, dist=0.5\n");
-  bridge.tx("regbot madd vel=0.2, edgel=0, white=1: lv<4, dist=0.05\n");
-
-  // turn sequence
-  bridge.tx("regbot madd vel=0.3,tr=0.4: turn=-45\n");
-  bridge.tx("regbot madd vel=0.0: time=0.5\n");
-  bridge.tx("regbot madd vel=0.3,tr=0.01: turn=45\n");
-  bridge.tx("regbot madd vel=0.0: time=0.5\n");
-  bridge.tx("regbot madd vel=0.3,tr=0.03: turn=170\n"); // robot is overturning
-  bridge.tx("regbot madd vel=0.0: time=1.0\n");
-
-  // follow line
-  bridge.tx("regbot madd vel=0.2, edger=0, white=1: lv<4, dist=0.2\n");
-  bridge.tx("regbot madd vel=0.0: time=0.5\n");
-  
-  // start this mission
-  bridge.tx("regbot start\n");
-  // wait until finished
-  cout << "user:# Waiting for " + string(__func__) + " to finish\n" << endl;
-  event.waitForEvent(0);
-  cout <<  "user:# obstacle " + string(__func__) + " has finished\n" << endl;
-}
-
-void reverseFromHome()
-{
-  // Utility moving sequence
-  // Moves the robot backwards, to allow subsequent sequences
-  // locate the cross line at the home intersection
-  
-  bridge.tx("regbot mclear\n");
-  event.clearEvents();
-
-  // reverse slightly
-  bridge.tx("regbot madd vel=-0.2: dist=0.2 \n");
-  bridge.tx("regbot madd vel=0.0: time=0.2 \n");
-  
-  // start this mission
-  bridge.tx("regbot start\n");
-  // wait until finished
-  cout << "user:# Waiting for " + string(__func__) + " to finish\n" << endl;
-  event.waitForEvent(0);
-  cout <<  "user:# obstacle " + string(__func__) + " has finished\n" << endl;
 }
 
 void guillotine()
@@ -372,17 +309,16 @@ void stairs()
 
 void offHeadingController()
 {
-  
-  // reset bridge mission
-  bridge.tx("regbot mclear\n");
-  event.clearEvents();
-  usleep(2000);
+  // // reset bridge mission
+  // bridge.tx("regbot mclear\n");
+  // event.clearEvents();
+  // usleep(2000);
 
   // bridge.tx("regbot:ctrn subscribe -1");
   bridge.tx("regbot ctrn 0 1 0 1 9999.99 1 0 1 1 0 1 1 0 1 1 0 1 9999.99 1 0 1 0 1 1 0 9999.99\n");
 
-  bridge.tx("regbot start\n");
-  event.waitForEvent(0);
+  // bridge.tx("regbot start\n");
+  // event.waitForEvent(0);
 }
 
 void onHeadingController()
@@ -399,7 +335,6 @@ void onHeadingController()
   event.waitForEvent(0);
 }
 
-
 void tunnel()
 {
   bridge.tx("regbot mclear\n");
@@ -407,7 +342,7 @@ void tunnel()
   usleep(200);
 
   // find home1 and u-turn
-  bridge.tx("regbot madd servo=1, pservo=900, vservo=120: time=1.0\n");   // raiwse arm 
+  bridge.tx("regbot madd servo=1, pservo=900, vservo=120: time=1.0\n");   // raise arm 
   bridge.tx("regbot madd vel=0.2: dist=0.05\n");
   bridge.tx("regbot madd vel=0.2: lv=20, dist=0.8\n");
   bridge.tx("regbot madd vel=0.2, edger=0, white=1: dist=1.0, lv<4, xl>15\n");
@@ -453,8 +388,6 @@ void tunnel()
   // turn left twice into tunnel
   bridge.tx("regbot madd vel=0.3, tr=0.35: turn=90\n");
   bridge.tx("regbot madd vel=0.0: time=1.5\n");
-  // bridge.tx("regbot madd vel=0.1: dist=0.05\n");
-  // bridge.tx("regbot madd vel=0.0: time=1.5\n");
 
   // reset bridge mission
   bridge.tx("regbot start\n");
@@ -722,7 +655,6 @@ void roundaboutGate()
   cout << "user:# Waiting for " + string(__func__) + " to finish\n" << endl;
   event.waitForEvent(0);
   cout <<  "user:# obstacle " + string(__func__) + " has finished\n" << endl;
-
 }
 
 void roundaboutHome()
@@ -750,11 +682,9 @@ void roundaboutHome()
 
   // start this mission
   bridge.tx("regbot start\n");
-  // wait until finished
   cout << "user:# Waiting for " + string(__func__) + " to finish\n" << endl;
   event.waitForEvent(0);
   cout <<  "user:# obstacle " + string(__func__) + " has finished\n" << endl;
-
 }
 
 void goal()
@@ -782,7 +712,6 @@ void goal()
 
   // start this mission
   bridge.tx("regbot start\n");
-  // wait until finished
   cout << "user:# Waiting for " + string(__func__) + " to finish\n" << endl;
   event.waitForEvent(0);
   cout <<  "user:# obstacle " + string(__func__) + " has finished\n" << endl;
@@ -829,7 +758,6 @@ void deliverBallFromStartRamp()
 
   event.waitForEvent(0);
 	cout << "user:# Waiting  for " + string(__func__) + " to finish" << endl;
-
 }
 
 void armNeutralPos()
@@ -845,7 +773,6 @@ void armNeutralPos()
 
   event.waitForEvent(0);
 	cout << "user:# Waiting  for " + string(__func__) + " to finish" << endl;
-
 }
 
 void gripExample()
@@ -916,7 +843,6 @@ void guillotineRampSequence()
 
 void tunnelSequence()
 {
-  // uTurn();
   offHeadingController();
   tunnel();
   tunnelToHome();
@@ -931,7 +857,7 @@ void axeFastTrackSequence()
 
 void getBallOnRamp()
 {
-  //ballOnRamp();  
+  ballOnRamp();  
   deliverBallFromStartRamp();
 }
 
@@ -1002,42 +928,55 @@ void aruco_mission(){
   bool aruco = vision.aruco_mission(560);
 }
 
-
 int main(int argc, char **argv)
 {
   cout << "# Hello, Robobot user mission starting ..." << endl;
   setup(argc, argv);
   cout << "After setup" << endl;
 
-
 // ALL THIS WORKS AND IS TESTED //
-  // guillotineRampSequence();   // works
-  //axeFastTrackSequence();     // works 
-  // restartRamp();              // Works
-  //getBallOnRamp();
-  // restartRamp();              // works  
+  guillotineRampSequence();
+  axeFastTrackSequence();
+
+  restartRamp();
+  getBallOnRamp();
+
+  restartRamp();
+  seesawST();
+
+  restartRamp();
+  deliverBallFromStartRamp();
+
+  // roundaboutGate();
+  // roundaboutHome();
+  // tunnelSequence();
+
+  // restartRamp();
+  // stairs();
+
+  //aruco_mission();
+
+  // restartRamp();
+  // ballOnRamp();
+
+  // restartRamp();  
   // seesawST();          // WITHOUT heading controller
-  //restartRamp();              // works
-  //deliverBall();
-  // tunnelSequence();           // works
-  // goal();                     // works
+  // restartRamp();
+  // deliverBallFromStartRamp();
+  
+  // goal();
+
 // TILL HERE //
 
 
 // WORKS AND TESTED INDIVIDUALLY //
-  stairs();
-  // roundaboutGate();          // works from start 50 pct chance
-  // roundaboutHome();         // Does NOT work
-
-  //aruco_mission();
-
+  
  
 // NOT TESTED
-
   // armNeutralPos();
   // patrolSequence();           // Stopping robot does NOT work. Following(stop/go) is NOT implemented
 
-
+// Exit mission
   cout << "# Robobot user mission finished ..." << endl;
   vision.stop();      // remember to close camera
   sound.say("Mission complete", 0.2);

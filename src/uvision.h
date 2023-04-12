@@ -216,7 +216,7 @@ private:
   int socket_val;
   const int port = 8080;
 
-  bool doFindAruco(float seconds, int id);
+  bool doFindAruco(float seconds, int id, float subs);
   cv::Mat1f aruco_location();
 
   std::map<int, std::vector<cv::Vec3i>> markerSamples;
