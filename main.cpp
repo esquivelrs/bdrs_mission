@@ -969,8 +969,14 @@ void seesawST()
 }
 
 void aruco_mission(){
-  bool aruco = vision.aruco_mission(560);
+  bool aruco = vision.aruco_mission(20);
 }
+
+void golf_mission(){
+  bool aruco = vision.golf_mission();
+}
+
+
 
 int main(int argc, char **argv)
 {
@@ -979,10 +985,10 @@ int main(int argc, char **argv)
   cout << "After setup" << endl;
 
 // ALL THIS WORKS AND IS TESTED //
-  guillotineRampSequence();
-  axeFastTrackSequence();
-  roundaboutGate();
-  roundaboutHome();
+  // guillotineRampSequence();
+  // axeFastTrackSequence();
+  // roundaboutGate();
+  // roundaboutHome();
 
   // tunnelSequence();
   // restartRamp();
@@ -991,13 +997,14 @@ int main(int argc, char **argv)
   // restartRamp();
   // getBallOnRamp();
 
-  restartRamp();
-  seesawST();
+  // restartRamp();
+  // seesawST();
 
   // restartRamp();
   // deliverBallFromStartRampNoHead();
 
-  aruco_mission();
+  //aruco_mission();
+  golf_mission();
 
   // restartRamp();
   // ballOnRamp();
@@ -1007,7 +1014,7 @@ int main(int argc, char **argv)
   // restartRamp();
   // deliverBallFromStartRamp();
   
-  goal();
+  //goal();
 
 // TILL HERE //
 

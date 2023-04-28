@@ -203,7 +203,7 @@ private:
   cv::Mat1f robot2orig(float x, float y);
   cv::Mat1f orig2robot(float x, float y);
 
-  const cv::Scalar low_orange = cv::Scalar(0, 45, 100);
+  const cv::Scalar low_orange = cv::Scalar(0, 104, 144);
   const cv::Scalar up_orange = cv::Scalar(30, 255, 255);
 
   const cv::Scalar low_blue = cv::Scalar(90,20,200);

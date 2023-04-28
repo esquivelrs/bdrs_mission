@@ -1,0 +1,64 @@
+# Hello, Robobot user mission starting ...
+# Video device 1: width=1280, height=720, format=MJPG, FPS=25
+# Vision::setup: Starting image capture loop
+Camera matrix: 
+[1721.169790380212, 0, 407.2519920861654;
+ 0, 1784.01058180834, 452.8292771020137;
+ 0, 0, 1]
+Distortion coefficients: 
+[-0.8503739892089026, -0.516520709967319, -0.00176017591377275, 0.1027593664093502, 1.722774955959566]
+USay:: text2wave returned 32512
+# Set up complete OK
+After setup
+PARAMS TO UPDATE : 0,0 angle 0
+Matrix: [1, -0, 0;
+ 0, 1, 0;
+ 0, 0, 1]
+OLD ROBOT POS: 0,0 angle 0
+NEW ROBOT POS: 0,0 angle 0
+Releasing a ball...
+# No mission is started! - stopped waiting for event.
+# LOOP FRAMES FOR BALL
+# BALL,0.7742,-0.0443,0.0677,34.0000
+# BALL,0.6959,-0.0408,0.0924,39.0000
+# BALL,0.7934,-0.0554,0.0635,33.0000
+Mean: [0.78378874, -0.049821749, 0.065623239]
+Samples 2
+NOT FOUND BALL
+# LOOP FRAMES FOR BALL
+# BALL,0.5917,-0.0296,0.1135,48.0000
+# BALL,0.8138,-0.0564,0.0591,32.0000
+# BALL,0.7934,-0.0437,0.0635,33.0000
+# BALL,0.7934,-0.0554,0.0635,33.0000
+# BALL,0.8138,-0.0571,0.0591,32.0000
+# BALL,0.8138,-0.0571,0.0591,32.0000
+Mean: [0.8056488, -0.053937316, 0.060890675]
+Samples 5
+NOT FOUND BALL
+# LOOP FRAMES FOR BALL
+# BALL,0.7934,-0.0554,0.0635,33.0000
+# BALL,0.7742,-0.0449,0.0677,34.0000
+# BALL,0.7934,-0.0554,0.0635,33.0000
+# BALL,0.7742,-0.0449,0.0677,34.0000
+# BALL,0.7934,-0.0554,0.0635,33.0000
+# BALL,0.7934,-0.0482,0.0635,33.0000
+# BALL,0.5330,-0.0199,0.1223,55.0000
+# BALL,0.6426,-0.0330,0.0992,43.0000
+# BALL,0.6113,-0.0308,0.1095,46.0000
+# BALL,0.7934,-0.0554,0.0635,33.0000
+# BALL,0.8138,-0.0497,0.0591,32.0000
+Mean: [0.77417994, -0.044897061, 0.0677035]
+Samples 2
+NOT FOUND BALL
+Position of origin: (-0, -0)
+robot_angle!!: -180
+Angle -180 degrees  Distance: 0
+USay:: text2wave returned 32512
+regbot madd vel=0.20,tr=0.0:turn=-180.0
+
+regbot madd vel=0.2:dist=0.00
+
+# No mission is started! - stopped waiting for event.
+HOME...
+# Robobot user mission finished ...
+USay:: text2wave returned 32512

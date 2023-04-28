@@ -59,7 +59,7 @@ void UVision::setup(int argc, char **argv)
 { /// Setup camera and start streaming
   // open the default camera using default API
   // and select any API backend
-  int dev = 0;
+  int dev = 1;
   //
   // decode any debug parameters
   // command line parameters
@@ -281,7 +281,7 @@ bool UVision::getNewestFrame()
     usleep(3000);
   }
   if (not gotFrame)
-    printf("# failed to get an image frame\n");
+    //printf("# failed to get an image frame\n");
   return gotFrame;
 }
 
@@ -375,12 +375,12 @@ bool UVision::getBalls(string mode="GROSS"){
         int hue = round(mean[0]);
         int sat = round(mean[1]);
         int val = round(mean[2]);
-        cout << "CIRCLE FOUND: " << center << " radio: " << c[2] << " hue: " << hue << " sat: " << sat << " val: " << val <<"\n";
+        //cout << "CIRCLE FOUND: " << center << " radio: " << c[2] << " hue: " << hue << " sat: " << sat << " val: " << val <<"\n";
 
         if (hue< 30 and val>160){
         //if (hue< 30){
-          cout << "BALL FOUND: " << center;
-          cout << " radio: " << c[2] << " hue: " << hue << "\n";
+          //cout << "BALL FOUND: " << center;
+          //cout << " radio: " << c[2] << " hue: " << hue << "\n";
           cv::circle( frame_ud, center, 1, Scalar(0,255,0), 1, LINE_AA);
           // circle outline
           int radius = c[2];
@@ -393,6 +393,7 @@ bool UVision::getBalls(string mode="GROSS"){
           f_circle[2] = radius;
 
           balls_dict[radius] = calc_pos3drob(f_circle, golfBallDiameter);
+          
           ball = true;
 
 
@@ -517,7 +518,7 @@ bool UVision::loopFrames(float seconds, string obj, string mode)
   t.now();
   frameSerial = 0;
   while (frameSerial < 30){
-    cout << "# wait for the first frames\n";
+    //cout << "# wait for the first frames\n";
     getNewestFrame(); 
 
   }
@@ -526,10 +527,11 @@ bool UVision::loopFrames(float seconds, string obj, string mode)
 
 
   //while (t.getTimePassed() < seconds and camIsOpen and not terminate and n<5) {
-  while (t.getTimePassed() < seconds and camIsOpen and not terminate and numSamples < 20) {
+  while (t.getTimePassed() < seconds and camIsOpen and not terminate and numSamples < 25) {
     //cap >> image;
 
     getNewestFrame(); 
+    float max_radius = std::numeric_limits<float>::min();
 
     bool found = false;
     if (gotFrame){
@@ -537,7 +539,6 @@ bool UVision::loopFrames(float seconds, string obj, string mode)
         found = getBalls(mode);
         if (found==true){
 
-          float max_radius = std::numeric_limits<float>::min();
           for (const auto& it : balls_dict)
           {
               if (it.first > max_radius)
@@ -563,8 +564,8 @@ bool UVision::loopFrames(float seconds, string obj, string mode)
 
       if (found==true){
         
-        printf("# Object position in robot coordinates (x,y,z)=(%.2f, %.2f, %.2f)\n", 
-              pos3drob.at<float>(0), pos3drob.at<float>(1), pos3drob.at<float>(2));
+        printf("# BALL,%.4f,%.4f,%.4f,%.4f\n", 
+              pos3drob.at<float>(0), pos3drob.at<float>(1), pos3drob.at<float>(2), max_radius);
         
         std::vector<float> sample = pos3drob;
 
@@ -572,7 +573,7 @@ bool UVision::loopFrames(float seconds, string obj, string mode)
 
         cv::Mat1f sampleMat = cv::Mat1f(sample3, true).t();
         //sampleMat.resize(3);
-        cout << "sample: " << sampleMat;
+        //cout << "sample: " << sampleMat;
         samples.push_back(sampleMat);
         accumulated += sampleMat;
         numSamples += 1;
@@ -603,7 +604,7 @@ bool UVision::loopFrames(float seconds, string obj, string mode)
   std::vector<cv::Mat1f> filteredSamples;
   for (auto& sample : samples) {
       float distance = cv::norm(sample - mean);
-      cout << "distance : " << distance << "\n";
+      // cout << "distance : " << distance << "\n";
       if (distance <= distanceThreshold) {
           filteredSamples.push_back(sample);
       }
@@ -1016,51 +1017,46 @@ bool UVision::golf_mission(){
   addBoundaryPoint(0.0, -3.0);
   addBoundaryPoint(5.0, -3.0);
   releaseBall();
-  while(n<3 and t.getTimePassed() < 180){
+  while(n<6 and t.getTimePassed() < 60){
   //while(n<6){
     bool res = false;
     res = loopFrames(20, "BALL", "GROSS");
-    if (res == true){
-      std::cout << "# BALL FOUND "<< n <<" Pos: " << objPossition << "\n";
-      move(objPossition);
-      //usleep(2000);
+    // if (false){
+    //   //std::cout << "# BALL FOUND "<< n <<" Pos: " << objPossition << "\n";
+    //   move(objPossition);
+    //   //usleep(2000);
       
-      res = loopFrames(5, "BALL", "FINE");
-      //res = false;
-      if (res == true){
-        std::cout << "# BALL FINE FOUND "<< n <<" Pos: " << objPossition << "\n";
-        move(objPossition);
-        takeBall();
+    //   res = loopFrames(5, "BALL", "FINE");
+    //   //res = false;
+    //   if (res == true){
+    //     std::cout << "# BALL FINE FOUND "<< n <<" Pos: " << objPossition << "\n";
+    //     move(objPossition);
+    //     takeBall();
         
-        res = loopFrames(20, "HOLE", "GROSS");
-        if (res == true){
-          std::cout << "# HOLE FOUND "<< n <<" Pos: " << objPossition << "\n";
-          move(objPossition);
-          releaseBall();
-          move(objPossition,"backward");
-          n +=1;
-        }
-        else {
-          //MOVE ARROUND
-          move_arround();
+    //     res = loopFrames(20, "HOLE", "GROSS");
+    //     if (res == true){
+    //       std::cout << "# HOLE FOUND "<< n <<" Pos: " << objPossition << "\n";
+    //       move(objPossition);
+    //       releaseBall();
+    //       move(objPossition,"backward");
+    //       n +=1;
+    //     }
+    //     else {
+    //       //MOVE ARROUND
+    //       move_arround();
 
 
-        }
-      }
-      else {
-        //MOVE ARROUND
-        move_arround();
+    //     }
+    //   }
+    //   else {
+    //     //MOVE ARROUND
+    //     move_arround();
 
 
-      }
+    //   }
       
-    }
-    else {
-      //MOVE ARROUND
-      move_arround();
-
-
-    }
+    // }
+    
 
 
   }
@@ -1340,24 +1336,24 @@ bool UVision::aruco_mission(float seconds){
 
         //move(aruco_pos);
 
-        prepareArmAruco();
+        // prepareArmAruco();
 
-        inst = "regbot madd vel=0.1,edger=0.0,white=1:dist=" + std::to_string(dist) + "\n";
+        // inst = "regbot madd vel=0.1,edger=0.0,white=1:dist=" + std::to_string(dist) + "\n";
         
-        execute_instruction(inst);
+        // execute_instruction(inst);
 
-        //drive(dist, 0.1);
-        takeAruco();
+        // //drive(dist, 0.1);
+        // takeAruco();
           
         
-        //drive(-0.8, -0.1);
-        inst = "regbot madd vel=-0.2: xl>16\n";
-        execute_instruction(inst);
-        drive(-0.8, -0.1);
-        turn_angle(100, 0.1);
-        drive(-0.2, -0.1);
+        // //drive(-0.8, -0.1);
+        // inst = "regbot madd vel=-0.2: xl>16\n";
+        // execute_instruction(inst);
+        // drive(-0.8, -0.1);
+        // turn_angle(100, 0.1);
+        // drive(-0.2, -0.1);
         status = doFindAruco(15, leftMarkerId, 0.1);
-        if (status){
+        if (false){
           std::cout << "ARUCO HOME FOUND" << aruco_pos <<  std::endl;
 
           drive(-0.05, -0.1);
@@ -1457,8 +1453,8 @@ bool UVision::aruco_mission(float seconds){
 
   //t.getTimePassed() < seconds and n<4 and tries < 3
 
-  cout << "ARUCO RESULTS time="<< t.getTimePassed() << " captures " << n << " tries " << tries << "\n";
-  goto_home_aruco();
+  // cout << "ARUCO RESULTS time="<< t.getTimePassed() << " captures " << n << " tries " << tries << "\n";
+  // goto_home_aruco();
 
 
 

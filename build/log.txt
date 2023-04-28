@@ -1,0 +1,19 @@
+# Hello, Robobot user mission starting ...
+# Shutting down due to signal 2
+# Video device 0: width=1280, height=720, format=MJPG, FPS=25
+# Vision::setup: Starting image capture loop
+Camera matrix: 
+[1721.169790380212, 0, 407.2519920861654;
+ 0, 1784.01058180834, 452.8292771020137;
+ 0, 0, 1]
+Distortion coefficients: 
+[-0.8503739892089026, -0.516520709967319, -0.00176017591377275, 0.1027593664093502, 1.722774955959566]
+USay:: text2wave returned 32512
+# Set up complete OK
+After setup
+PARAMS TO UPDATE : 0,0 angle 0
+Matrix: [1, -0, 0;
+ 0, 1, 0;
+ 0, 0, 1]
+OLD ROBOT POS: 0,0 angle 0
+NEW ROBOT POS: 0,0 angle 0
